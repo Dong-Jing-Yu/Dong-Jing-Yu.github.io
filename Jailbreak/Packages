@@ -1,0 +1,30 @@
+Package: com.Magician.pubg
+Version: 3.2.0
+Architecture: iphoneos-arm64
+Maintainer: Magician
+Installed-Size: 13636
+Depends: mobilesubstrate, preferenceloader
+Filename: debs/rootless/魔术师无根V4.deb
+Size: 3895194
+MD5sum: 684e730c84b38a93c81419feb853e893
+SHA1: 7317a1619262f4415118624b1a128ec71dfa5d18
+SHA256: 7e600802bc689416ef0b7e51c2681a56e858bfb9770bfb6429aaa0e901ae4e6a
+Section: Tweaks
+Description: Magician
+Author: Magician
+Name: Magician ENGINE
+
+Package: ggvip.pubgm.gl
+Version: 3.1
+Architecture: iphoneos-arm64
+Maintainer: Shar
+Installed-Size: 11848
+Filename: debs/rootless/ggvip.pubgm.gl_3.1.deb
+Size: 3002182
+MD5sum: 3570fed875d9b6604dc0c0ad3773d910
+SHA1: 6cacd6587fb4093e839616fbfbe906a88c58f7a7
+SHA256: 53c4d7bbf29da019307609b0f6d8473fb0eb5c424fe0a5acc13ae0d39b9f0595
+Description: iOS GG
+Author: @SRxVn195
+Name: GG ENGINE
+
