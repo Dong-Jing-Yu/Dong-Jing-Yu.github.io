@@ -1,0 +1,9 @@
+Origin: 经雨
+Label: 经雨
+Suite: stable
+Version: 1.0
+Codename: 1
+Architectures: iphoneos-arm iphoneos-arm64
+Components: main
+Description: 描述
+Icon: file://CydiaIcon.png
