@@ -1,16 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>经雨JAVA</title>
-<link rel="stylesheet" href="css/clock.css">
+  <meta charset="UTF-8">
+  <title>经雨JAVA</title>
+    <link rel="stylesheet" href="css/style.css" media="screen" type="text/css" />
 </head>
 <body>
-<ul class="clock" id="helang-clock">
-    <hr>
-</ul>
-<script type="text/javascript" src="js/jquery-3.7.1.min.js"></script>
-<script type="text/javascript" src="js/clock.js"></script>
-<script type="text/javascript"> $("#helang-clock").clock(); </script>
+<div class="fill">
+  <div class="reference"></div>
+  <div class="clock" id="utility-clock">
+    <div class="centre">
+      <div class="dynamic"></div>
+      <div class="expand round circle-1"></div>
+      <div class="anchor hour">
+        <div class="element thin-hand"></div>
+        <div class="element fat-hand"></div>
+      </div>
+      <div class="anchor minute">
+        <div class="element thin-hand"></div>
+        <div class="element fat-hand minute-hand"></div>
+      </div>
+      <div class="anchor second">
+        <div class="element second-hand"></div>
+      </div>
+      <div class="expand round circle-2"></div>
+      <div class="expand round circle-3"></div>
+    </div>
+  </div>
+</div>
+  <script src="js/main.js"></script>
 </body>
 </html>
