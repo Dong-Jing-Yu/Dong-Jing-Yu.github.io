@@ -1,11 +1,10 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh">
 
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="referrer" content="always">
-    <title>东经雨 | 主页</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>东经雨 | 小屋</title>
     <meta name="keywords" content="东经雨,博客,东经雨|主页,">
     <link rel="canonical" href="https://Dong-Jing-Yu.github.io/zh_CN">
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -15,10 +14,352 @@
         content="width=device-width, initial-scale=1.0,shrink-to-fit=no, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2B2B35">
     <link rel="shortcut icon" href="/img/logo.ico" type="image/x-icon">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+        :root {
+            --primary-color: #fb7299;
+            --primary-light: #ffd1dc;
+            --primary-dark: #d4517a;
+            --accent-color: #23ade5;
+            --accent-light: #7fdbff;
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #595959;
+            --shadow-sm: 0 2px 8px rgba(251, 114, 153, 0.08);
+            --shadow-md: 0 4px 16px rgba(251, 114, 153, 0.12);
+            --shadow-lg: 0 8px 24px rgba(251, 114, 153, 0.16);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2.5rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .profile-box {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .profile-box:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: block;
+            border: 4px solid var(--primary-light);
+        }
+
+        .bilibili-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            color: white;
+            margin: 1.5rem 0;
+        }
+
+        .bilibili-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s ease;
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .blog-box {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .blog-box.hidden {
+            display: none;
+        }
+
+        .blog-box:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .blog-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .blog-box:hover .blog-image img {
+            transform: scale(1.05);
+        }
+
+        .tags {
+            padding: 0 1.25rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tags span {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 0.4rem 1rem;
+            border-radius: var(--radius-lg);
+            font-size: 0.875rem;
+        }
+
+        .filter-box {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .filter-button {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-button.selected {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 280px 1fr;
+                gap: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-box {
+                position: static;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .bilibili-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filter-box {
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <script src="/js/main.js"></script>
+    <header>
+        <h1>🌧️ 东经雨的小屋</h1>
+        <p>用代码描绘梦想，用创意点亮生活喵～</p>
+    </header>
+
+    <div class="container">
+        <aside class="profile-box">
+            <img src="/api/placeholder/150/150" alt="东经雨头像" class="profile-image">
+            <h2>东经雨</h2>
+            <p>Hi！我是东经雨，一个热爱编程的人～</p>
+
+            <div class="bilibili-card">
+                <h3><i class="fab fa-bilibili"></i> 哔哩哔哩</h3>
+                <div class="bilibili-stats">
+                    <div class="stat-item">
+                        <div>粉丝</div>
+                        <div>10</div>
+                    </div>
+                    <div class="stat-item">
+                        <div>投稿</div>
+                        <div>0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div>点赞</div>
+                        <div>0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="social-links">
+                <a href="https://github.com/Dong-Jing-Yu" target="_blank" class="social-link">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://space.bilibili.com/1324528875" target="_blank" class="social-link">
+                    <i class="fab fa-bilibili"></i>
+                </a>
+            </div>
+
+            <blockquote>
+                "让代码像雨滴一样，滋润技术的土壤～"
+            </blockquote>
+
+            <div class="profile-stats">
+                <p>🌧️ 昵称：东经雨</p>
+                <p>💻 技能：全栈开发</p>
+                <p>📚 学习：云原生、人工智能</p>
+                <p>🎮 爱好：编程、游戏、动漫</p>
+            </div>
+        </aside>
+
+        <main>
+            <div class="filter-box">
+                <button class="filter-button selected" data-category="all">全部文章</button>
+                <button class="filter-button" data-category="编程">编程</button>
+                <button class="filter-button" data-category="技术">技术</button>
+                <button class="filter-button" data-category="生活">生活</button>
+                <button class="filter-button" data-category="项目">项目</button>
+            </div>
+
+            <div class="blog-grid">
+                <article class="blog-box" data-categories="技术,项目">
+                    <div class="blog-image">
+                        <img src="/api/placeholder/400/200" alt="项目展示">
+                    </div>
+                    <h3>我的开源项目展示</h3>
+                    <p>来看看我最近在GitHub上开源的项目，包含了一些有趣的技术实现喵～</p>
+                    <div class="tags">
+                        <span>技术</span>
+                        <span>项目</span>
+                        <span>开源</span>
+                    </div>
+                </article>
+
+                <article class="blog-box" data-categories="编程">
+                    <div class="blog-image">
+                        <img src="/api/placeholder/400/200" alt="编程技巧">
+                    </div>
+                    <h3>实用编程技巧分享</h3>
+                    <p>整理了一些日常开发中常用的编程技巧和最佳实践，希望能帮助到大家喵～</p>
+                    <div class="tags">
+                        <span>编程</span>
+                        <span>技巧</span>
+                    </div>
+                </article>
+
+                <article class="blog-box" data-categories="生活">
+                    <div class="blog-image">
+                        <img src="/api/placeholder/400/200" alt="生活记录">
+                    </div>
+                    <h3>程序猫娘的日常</h3>
+                    <p>记录一下作为程序员的日常生活，分享一些有趣的时刻喵～</p>
+                    <div class="tags">
+                        <span>生活</span>
+                        <span>日常</span>
+                    </div>
+                </article>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterButtons = document.querySelectorAll('.filter-button');
+            const blogBoxes = document.querySelectorAll('.blog-box');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 更新按钮状态
+                    filterButtons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+
+                    const category = button.dataset.category;
+
+                    // 过滤文章
+                    blogBoxes.forEach(box => {
+                        const categories = box.dataset.categories?.split(',') || [];
+                        if (category === 'all' || categories.includes(category)) {
+                            box.classList.remove('hidden');
+                        } else {
+                            box.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
     <script src="/live2d-widget/autoload.js"></script>
 </body>
 
