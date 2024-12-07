@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经雨🌧工具箱集</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+        .script-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .script-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 p-6">
+    <div class="container mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4 flex items-center justify-center">
+                <span class="mr-3">🌧</span>经雨工具箱集
+                <span class="ml-3">🧰</span>
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                收集并整合来自全球的精彩脚本，为开发者和用户提供多样化的工具支持
+            </p>
+        </header>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- 脚本卡片模板 -->
+            <div class="script-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl">
+                <div class="flex items-center mb-4">
+                    <div class="text-3xl mr-4">🌧</div>
+                    <h2 class="text-2xl font-semibold text-gray-800">经雨🌧工具箱</h2>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <p class="text-sm text-gray-600">版本</p>
+                        <p class="font-medium">1.0</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">作者</p>
+                        <p class="font-medium">东经雨</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-gray-600">
+                        整合了来自世界各地的脚本，提供丰富多样的工具资源，助力开发和创新。
+                    </p>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">最近更新: 2024-07-01</span>
+                    <a href="#" class="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition">
+                        查看详情
+                    </a>
+                </div>
+            </div>
+
+            <!-- 预留位置：未来可添加更多脚本卡片 -->
+            <div class="script-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl flex items-center justify-center text-gray-400 border-2 border-dashed">
+                <div class="text-center">
+                    <div class="text-4xl mb-4">➕</div>
+                    <p>添加新脚本</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center mt-12 text-gray-500">
+            <p>© 2024 经雨工具箱集 | 保留所有权利</p>
+        </footer>
+    </div>
+</body>
+</html>
