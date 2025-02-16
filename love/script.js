@@ -5,6 +5,7 @@ let mainImage = document.getElementById("mainImage");
 
 const params = new URLSearchParams(window.location.search);
 let username = params.get("name");
+let end = params.get("end");
 
 // 限制用户名长度，避免页面样式崩坏
 const maxLength = 20;
@@ -57,7 +58,7 @@ noButton.addEventListener("click", function () {
 });
 
 // Yes 按钮点击后，进入表白成功页面
-const loveTest = `🌿飞你!!! ( >᎑<)♡︎ᐝ  ${
+const loveTest = `🌿飞你! ( >᎑<)♡︎ᐝ  ${
   username ? `${safeUsername}  ♡︎ᐝ(>᎑< )` : ""
 }`;
 
