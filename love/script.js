@@ -10,7 +10,7 @@ let start = params.get("start")
 let end = params.get("end")
 
 if(start === null || start === "") {
-start = "";
+start = "我可以🌿你吗？";
 }
 
 // 限制用户名长度，避免页面样式崩坏
