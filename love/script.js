@@ -5,7 +5,13 @@ let mainImage = document.getElementById("mainImage");
 
 const params = new URLSearchParams(window.location.search);
 let username = params.get("name");
-let end = params.get("end");
+
+let start = params.get("start")
+let end = params.get("end")
+
+if(start === null || start === "") {
+start = "";
+}
 
 // 限制用户名长度，避免页面样式崩坏
 const maxLength = 20;
