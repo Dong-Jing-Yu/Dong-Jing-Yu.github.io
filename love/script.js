@@ -5,13 +5,8 @@ let mainImage = document.getElementById("mainImage");
 
 const params = new URLSearchParams(window.location.search);
 let username = params.get("name");
-
-let start = params.get("start")
-let end = params.get("end")
-
-if(start === null || start === "") {
-start = "可以成为我的恋人吗？";
-}
+let startParam = params.get("start");
+let endParam = params.get("end");
 
 // 限制用户名长度，避免页面样式崩坏
 const maxLength = 20;
@@ -20,6 +15,20 @@ const safeUsername = username ? username.substring(0, maxLength) : "???";
 // 防止 `null` 变成 `"null"`
 if (username) {
   questionText.innerText = questionText.innerText + safeUsername;
+}
+
+// 初始化问题文本
+const defaultQuestion = "可以成为我的恋人吗？";
+questionText.innerText = startParam ? truncateText(startParam, 30) : defaultQuestion;
+
+// 点击 Yes 后的内容
+const defaultLoveText = "喜欢你!";
+const customEndText = endParam ? truncateText(endParam, 50) : defaultLoveText;
+const loveTest = `${customEndText} \n ( >᎑<)♡︎ᐝ ${username ? `${truncateText(username, 20)} ♡︎ᐝ(>᎑< )` : ""}`;
+
+// 通用文字截断函数
+function truncateText(text, maxLength) {
+  return text ? text.substring(0, maxLength) : "";
 }
 
 let clickCount = 0; // 记录点击 No 的次数
