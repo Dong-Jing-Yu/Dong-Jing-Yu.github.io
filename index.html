@@ -104,6 +104,57 @@
             100% { background-position: -200% 0; }
         }
 
+        /* 新增打字机效果 */
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--accent-color) }
+        }
+
+        .typewriter {
+    display: inline-block;
+    overflow: hidden;
+    border-right: 2px solid;
+    white-space: nowrap;
+    animation: 
+        typing 3s steps(40, end),
+        blink-caret .75s step-end infinite;
+}
+
+/* 头像调整 */
+.profile-box {
+    text-align: center;
+}
+
+.profile-image {
+    border-radius: 20% !important;
+    margin: 0 auto 1rem !important;
+    transition: transform 0.3s ease;
+}
+
+.profile-image:hover {
+    transform: rotate(5deg) scale(1.05);
+}
+
+.profile-info h2 {
+    margin-top: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+.profile-info h2::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--primary-gradient);
+    margin-top: 0.5rem;
+}
+
         /* 博客卡片 */
         .blog-card {
             background: var(--bg-secondary);
@@ -166,17 +217,16 @@
 
 <body>
     <div class="container">
-        <header onclick="fetchHitokoto()" id="hitokoto-header">
+        <header onclick="fetchHitokoto(true)" id="hitokoto-header">
             <h1 id="hitokoto-text">🌌 夜影的维度</h1>
             <p id="hitokoto-from">在代码与星光的交界处构建数字世界</p>
         </header>
 
         <aside class="profile-box">
-            <img src="/img/avatar.png" class="profile-image">
-            <h2>夜影</h2>
-            <div class="skills-container">
-                <div class="skill">
-                    <span>TypeScript</span>
+    <div class="profile-info">
+        <img src="/img/avatar-night.png" class="profile-image" 
+             style="width: 140px; height: 140px; border-radius: 20%">
+        <h2>夜影<br><span style="font-size: 0.8em; color: var(--text-secondary)">全栈工程师</span>
                     <div class="progress-bar">
                         <div class="progress" style="width: 85%;">85%</div>
                     </div>
@@ -211,21 +261,36 @@
         </main>
     </div>
 </body>
-    <script>
+<script>
+let firstClick = true;
 let isFetching = false;
 
-async function fetchHitokoto() {
+async function fetchHitokoto(manual = false) {
     if(isFetching) return;
     
     try {
         isFetching = true;
-        document.getElementById('hitokoto-header').classList.add('loading');
+        const header = document.getElementById('hitokoto-header');
+        header.classList.add('loading');
         
         const response = await fetch('https://v1.hitokoto.cn/');
         const data = await response.json();
         
-        document.getElementById('hitokoto-text').textContent = data.hitokoto;
-        document.getElementById('hitokoto-from').textContent = `—— ${data.from || '未知来源'}`;
+        // 如果是首次点击才应用动画
+        if(firstClick || manual) {
+            const textElement = document.getElementById('hitokoto-text');
+            const fromElement = document.getElementById('hitokoto-from');
+            
+            textElement.innerHTML = '';
+            fromElement.innerHTML = '';
+            
+            // 打字动画实现
+            typeWriter(textElement, data.hitokoto, () => {
+                fromElement.textContent = `—— ${data.from || '未知来源'}`;
+            });
+            
+            firstClick = false;
+        }
         
     } catch (error) {
         document.getElementById('hitokoto-text').textContent = '连接星空失败...';
@@ -236,7 +301,26 @@ async function fetchHitokoto() {
     }
 }
 
-// 初始加载
-fetchHitokoto();
+// 打字机效果函数
+function typeWriter(element, text, callback) {
+    let i = 0;
+    element.classList.add('typewriter');
+    
+    function type() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, 100);
+        } else {
+            element.classList.remove('typewriter');
+            element.style.borderRight = 'none';
+            if(callback) callback();
+        }
+    }
+    
+    type();
+}
+
+// 移除自动加载，只在点击时触发
 </script>
 </html>
