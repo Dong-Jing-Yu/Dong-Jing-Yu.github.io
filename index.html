@@ -43,6 +43,13 @@
             grid-column: 1 / -1;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        header:hover {
+            transform: translateY(-2px);
         }
 
         header h1 {
@@ -82,6 +89,14 @@
                 rgba(124,58,237,0.2) 100%);
             background-size: 200% 100%;
             animation: gradientFlow 3s linear infinite;
+        }
+
+        .loading::after {
+            content: "✨";
+            position: absolute;
+            right: 20px;
+            bottom: 15px;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes gradientFlow {
@@ -142,14 +157,18 @@
                 font-size: 2rem;
             }
         }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <header>
-            <h1>🌌 夜影的维度</h1>
-            <p>在代码与星光的交界处构建数字世界</p>
+        <header onclick="fetchHitokoto()" id="hitokoto-header">
+            <h1 id="hitokoto-text">🌌 夜影的维度</h1>
+            <p id="hitokoto-from">在代码与星光的交界处构建数字世界</p>
         </header>
 
         <aside class="profile-box">
@@ -192,4 +211,32 @@
         </main>
     </div>
 </body>
+    <script>
+let isFetching = false;
+
+async function fetchHitokoto() {
+    if(isFetching) return;
+    
+    try {
+        isFetching = true;
+        document.getElementById('hitokoto-header').classList.add('loading');
+        
+        const response = await fetch('https://v1.hitokoto.cn/');
+        const data = await response.json();
+        
+        document.getElementById('hitokoto-text').textContent = data.hitokoto;
+        document.getElementById('hitokoto-from').textContent = `—— ${data.from || '未知来源'}`;
+        
+    } catch (error) {
+        document.getElementById('hitokoto-text').textContent = '连接星空失败...';
+        document.getElementById('hitokoto-from').textContent = '—— 夜影';
+    } finally {
+        isFetching = false;
+        document.getElementById('hitokoto-header').classList.remove('loading');
+    }
+}
+
+// 初始加载
+fetchHitokoto();
+</script>
 </html>
