@@ -1,141 +1,37 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>夜影 | 数字居所</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #7c3AED;
-            --primary-gradient: linear-gradient(135deg, #7c3AED 0%, #4F46E5 100%);
-            --accent-color: #10B981;
-            --bg-primary: #0F172A;
-            --bg-secondary: #1E293B;
-            --text-primary: #E2E8F0;
-            --text-secondary: #94A3B8;
-            --border-color: rgba(255,255,255,0.1);
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-            --radius-lg: 16px;
-        }
-
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 300px 1fr; /* 保持两列布局 */
-            gap: 2rem;
-        }
-
-        /* 新增打字机样式 */
-        .typewriter {
-            display: inline-block;
-            position: relative;
-            font-size: 2.5rem;
-            height: 3.5rem;
-            line-height: 3.5rem;
-        }
-
-        .typewriter::after {
-            content: '';
-            position: absolute;
-            right: -15px;
-            top: 5px;
-            height: 2.5rem;
-            width: 3px;
-            background-color: var(--accent-color);
-            animation: blink 0.8s steps(1) infinite;
-        }
-
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-
-        /* 修复布局问题 */
-        .blog-container {
-            grid-column: 2; /* 明确指定第二列 */
-            margin-top: 0; /* 移除默认外边距 */
-        }
-
-        /* 移动端适配 */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            .blog-container {
-                grid-column: 1;
-            }
-            .typewriter {
-                font-size: 1.8rem;
-                height: 2.5rem;
-                line-height: 2.5rem;
-            }
-        }
-    </style>
+    <title>星界观测站</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
     <div class="container">
-        <header>
-            <h1 class="typewriter"></h1>
+        <header id="hitokoto-header">
+            <div class="typewriter-container">
+                <h1 id="hitokoto-text" class="typewriter-text"></h1>
+            </div>
+            <p class="subtitle">
+                <span id="hitokoto-from"></span>
+                <span id="hitokoto-time" class="hitokoto-time"></span>
+            </p>
         </header>
 
         <aside class="profile-box">
-            <!-- 保持原有侧边栏内容 -->
+            <img src="/img/avatar.png" alt="观测者头像" class="profile-image">
+            <h2>夜影观察员</h2>
+            <p>星际代码架构师</p>
         </aside>
 
         <main class="blog-container">
-            <!-- 保持原有博客内容 -->
+            <!-- 博客内容区 -->
         </main>
     </div>
 
-    <script>
-        // 打字机效果实现
-        const typewriter = document.querySelector('.typewriter');
-        const texts = [
-            "代码即艺术。",
-            "在二进制中寻找诗意。",
-            "夜越深，代码越亮。"
-        ];
-        
-        let textIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-
-        function typeEffect() {
-            const currentText = texts[textIndex];
-            
-            if (!isDeleting) {
-                typewriter.textContent = currentText.slice(0, charIndex + 1);
-                charIndex++;
-                
-                if (charIndex === currentText.length) {
-                    isDeleting = true;
-                    setTimeout(typeEffect, 2000);
-                    return;
-                }
-            } else {
-                typewriter.textContent = currentText.slice(0, charIndex - 1);
-                charIndex--;
-                
-                if (charIndex === 0) {
-                    isDeleting = false;
-                    textIndex = (textIndex + 1) % texts.length;
-                }
-            }
-
-            setTimeout(typeEffect, isDeleting ? 100 : 150);
-        }
-
-        // 初始化
-        typeEffect();
-    </script>
+    <script src="/js/script.js"></script>
 </body>
+
 </html>
