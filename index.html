@@ -7,6 +7,8 @@
     <title>星界观测站</title>
     <link rel="icon" href="/img/logo.ico" type="image/x-icon">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/profile-card.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -22,9 +24,14 @@
         </header>
 
         <aside class="profile-box">
-            <img src="/img/avatar.png" alt="观测者头像" class="profile-image">
-            <h2>夜影观察员</h2>
-            <p>星际代码架构师</p>
+            <div class="avatar-container">
+                <img src="/img/avatar.png" class="profile-image" alt="星际观察者">
+                <div class="identity-field">
+                    <h2>夜影观察员</h2>
+                    <p class="stellar-title">量子架构工程师</p>
+                    <div class="nebula-badge">VII级认证开发者</div>
+                </div>
+            </div>
         </aside>
 
         <main class="blog-container">
@@ -33,6 +40,7 @@
     </div>
 
     <script src="/js/hitokoto-title-animations.js"></script>
+    <script src="/js/profile-widgets.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,98 @@
+/* 星际观测者档案卡 */
+.profile-box {
+    --stripe-color: rgba(124, 58, 237, 0.1);
+    --glow-color: #7c3aed;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 48%,
+            var(--stripe-color) 50%,
+            transparent 52%);
+    opacity: 0.3;
+    animation: space-flow 20s linear infinite;
+}
+
+@keyframes space-flow {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 全息头像效果 */
+.profile-image {
+    position: relative;
+    border: 2px solid transparent;
+    box-shadow: 0 0 12px var(--glow-color);
+    transition: all 0.5s ease;
+}
+
+.profile-image:hover {
+    transform: rotate3d(1, 1, 0.5, 15deg);
+    box-shadow: 0 0 24px var(--glow-color);
+}
+
+/* 数据星图 */
+.star-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.star-node {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.star-node:hover {
+    transform: translateY(-5px);
+    background: linear-gradient(45deg, #7c3aed33, #4f46e533);
+}
+
+/* 量子连接 */
+.quantum-link {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.q-link {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.2);
+    display: grid;
+    place-items: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.q-link::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    border: 1px solid var(--glow-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.q-link:hover {
+    background: rgba(124, 58, 237, 0.4);
+}
+
+.q-link:hover::after {
+    opacity: 1;
+}

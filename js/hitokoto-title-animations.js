@@ -24,17 +24,25 @@ let currentJob = null;
 async function typeEffect(element, text) {
     return new Promise(resolve => {
         let index = 0;
+        let lastTime = 0;
         element.textContent = '';
         element.style.opacity = '1';
 
-        const animate = () => {
-            if (index < text.length) {
-                element.textContent += text.charAt(index);
-                index++;
-                requestAnimationFrame(animate);
-            } else {
-                resolve();
+        const animate = (timestamp) => {
+            if (!lastTime) lastTime = timestamp;
+            const delta = timestamp - lastTime;
+
+            if (delta > TYPE_DELAY) {
+                if (index < text.length) {
+                    element.textContent += text.charAt(index);
+                    index++;
+                    lastTime = timestamp;
+                } else {
+                    resolve();
+                    return;
+                }
             }
+            requestAnimationFrame(animate);
         };
         requestAnimationFrame(animate);
     });
@@ -163,25 +171,25 @@ async function updateHitokoto() {
     isAnimating = true;
 
     try {
-        // 清除现有计时器和动画
+        // 始终清除现有内容和计时器
         if (currentJob) {
             clearTimeout(currentJob);
-            currentJob = null;
-            await reverseReset(); // 改为反向清除
         }
+        currentJob = null; // 新增：强制重置计时器引用
 
-        // 获取新数据
+        // 新增：无论当前状态都执行清除
+        await reverseReset();
+
+        // 获取新数据并显示
         const response = await fetch('https://v1.hitokoto.cn/');
         if (!response.ok) throw new Error('Network error');
         const data = await response.json();
-
-        // 处理新数据
         await processHitokoto(data);
 
-        // 重置倒计时（10秒）
+        // 设置新的自动重置定时器
         currentJob = setTimeout(async () => {
-            const textElement = document.getElementById('hitokoto-text');
-            const fromElement = document.getElementById('hitokoto-from');
+            const textElement = document.getElementById('hitokoto-text'); // 新增：重新获取元素引用
+            const fromElement = document.getElementById('hitokoto-from'); // 新增：重新获取元素引用
 
             await reverseReset();
 
@@ -190,7 +198,8 @@ async function updateHitokoto() {
             await typeEffect(fromElement, fromElement.dataset.original);
 
             currentJob = null;
-        }, 10000);
+        }, AUTO_RESET_TIME);
+
     } catch (error) {
         await processHitokoto({
             hitokoto: "✨ 星链信号中断",
