@@ -150,11 +150,8 @@ header:hover {
 .hitokoto-time {
     font-size: 0.9em;
     color: #94a3b8;
-    margin-left: 1em;
+    /*margin-left: 1em;*/
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-.hitokoto-time::before {
-    content: "·";
-}
