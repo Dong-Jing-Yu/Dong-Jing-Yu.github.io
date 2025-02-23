@@ -1,0 +1,160 @@
+:root {
+    --primary-color: #7c3AED;
+    --primary-gradient: linear-gradient(135deg, #7c3AED 0%, #4F46E5 100%);
+    --accent-color: #10B981;
+    --bg-primary: #0F172A;
+    --bg-secondary: #1E293B;
+    --text-primary: #E2E8F0;
+    --text-secondary: #94A3B8;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --radius-lg: 16px;
+}
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+}
+
+header {
+    background: var(--primary-gradient);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    grid-column: 1 / -1;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+header:hover {
+    transform: translateY(-2px);
+}
+
+.typewriter {
+    display: inline-block;
+    position: relative;
+    font-size: 2.5rem;
+    overflow: hidden;
+    border-right: 3px solid var(--accent-color);
+    white-space: nowrap;
+    animation: typing 3s steps(40, end), blink 0.75s step-end infinite;
+}
+
+.typewriter-container {
+    position: relative;
+    min-height: 100px;
+}
+
+.typewriter-text {
+    font-family: 'fangsong', serif;
+    font-size: 2.5rem;
+    color: #E2E8F0;
+    display: inline-block;
+    /* 移除绝对定位 */
+    padding-right: 15px;
+    /* 为光标留出空间 */
+}
+
+.typewriter-text::after {
+    right: 0;
+    /* 调整光标位置 */
+    top: 5px;
+    height: 80%;
+    /* 更自然的光标比例 */
+}
+
+@keyframes typing {
+    from {
+        width: 0
+    }
+
+    to {
+        width: 100%
+    }
+}
+
+@keyframes blink {
+
+    from,
+    to {
+        border-color: transparent
+    }
+
+    50% {
+        border-color: var(--accent-color)
+    }
+}
+
+@keyframes san {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #94A3B8;
+  margin-top: 1rem;
+  opacity: 0.8;
+}
+
+.profile-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    position: sticky;
+    top: 2rem;
+    text-align: center;
+}
+
+.profile-image {
+    width: 160px;
+    height: 160px;
+    border-radius: 20%;
+    border: 3px solid var(--primary-color);
+    margin-bottom: 1.5rem;
+    object-fit: cover;
+}
+
+.blog-container {
+    grid-column: 2;
+    margin-top: 0;
+}
+
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .blog-container {
+        grid-column: 1;
+    }
+
+    .typewriter {
+        font-size: 1.8rem;
+    }
+}
+
+.hitokoto-time {
+    font-size: 0.9em;
+    color: #94a3b8;
+    margin-left: 1em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hitokoto-time::before {
+    content: "·";
+}
