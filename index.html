@@ -24,13 +24,54 @@
         </header>
 
         <aside class="profile-box">
-            <div class="avatar-container">
-                <img src="/img/avatar.png" class="profile-image" alt="星际观察者">
-                <div class="identity-field">
-                    <h2>夜影观察员</h2>
-                    <p class="stellar-title">量子架构工程师</p>
-                    <div class="nebula-badge">VII级认证开发者</div>
+            <!-- 基础信息卡 -->
+            <div class="card-3d avatar-card">
+                <div class="hologram-container">
+                    <img src="/img/avatar.png" class="hologram-img">
+                    <div class="hologram-aura"></div>
                 </div>
+                <div class="identity-info">
+                    <h2 class="neon-text">夜影观察员</h2>
+                    <p class="glow-text">全栈架构师</p>
+                    <div class="galaxy-badge">✦ 星云级开发者 ✦</div>
+                </div>
+            </div>
+        
+            <!-- 技能面板 -->
+            <div class="card-3d status-panel">
+                <div class="skill-item">
+                    <div class="skill-header">
+                        <i class="fab fa-js"></i>
+                        <div class="skill-meta">
+                            <span class="skill-name">JavaScript</span>
+                            <span class="skill-percent">85%</span>
+                        </div>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="progress" style="--progress:85%">
+                            <div class="glow-track"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-header">
+                        <i class="fab fa-python"></i>
+                        <div class="skill-meta">
+                            <span class="skill-name">Python</span>
+                            <span class="skill-percent">92%</span>
+                        </div>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="progress" style="--progress:92%">
+                            <div class="glow-track"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- 技能星云 -->
+            <div class="card-3d skill-cloud">
+                <!-- JS动态生成 -->
             </div>
         </aside>
 

@@ -1,76 +1,87 @@
 class ProfileWidgets {
     constructor() {
-        this.nodes = {
-            skills: [
-                { name: '量子编程', level: 92 },
-                { name: '星图导航', level: 88 },
-                { name: '曲速引擎', level: 95 }
-            ],
-            links: [
-                { icon: 'github', url: 'https://github.com' },
-                { icon: 'linkedin', url: '#' },
-                { icon: 'rocket', url: '#' }
-            ]
-        };
+        this.init3DSystem();
+        this.initSkillsProgress();
+        this.createSkillCloud();
+    }
+
+    init3DSystem() {
+        document.querySelectorAll('.card-3d').forEach(card => {
+            new Card3D(card, 14);
+        });
+    }
+
+    initSkillsProgress() {
+        setTimeout(() => {
+            document.querySelectorAll('.progress').forEach(progress => {
+                const targetWidth = progress.style.width;
+                progress.style.width = '0';
+                void progress.offsetWidth; // 触发重绘
+                progress.style.transition = 'width 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                progress.style.width = targetWidth;
+            });
+        }, 500);
+    }
+
+    createSkillCloud() {
+        const cloud = document.querySelector('.skill-cloud');
+        const skills = ['React', 'Vue', 'Node', 'Docker', 'K8S', 'AWS'];
+        const centerX = cloud.offsetWidth / 2;
+        const centerY = cloud.offsetHeight / 2;
+        const radius = 140;
+
+        skills.forEach((skill, index) => {
+            const angle = (index * Math.PI * 2) / skills.length;
+            const node = document.createElement('div');
+            node.className = 'skill-node';
+
+            const x = centerX + Math.cos(angle) * radius - 20;
+            const y = centerY + Math.sin(angle) * radius - 20;
+
+            node.style.cssText = `
+                left: ${x}px;
+                top: ${y}px;
+                color: hsl(${(index * 60) % 360}, 70%, 75%);
+            `;
+            node.innerHTML = `
+                <div class="node-core"></div>
+                <span>${skill}</span>
+            `;
+            cloud.appendChild(node);
+        });
+    }
+}
+
+class Card3D {
+    constructor(element, rotationRange = 14) {
+        this.element = element;
+        this.rotationRange = rotationRange;
+        this.init();
     }
 
     init() {
-        this.renderStarMap();
-        this.renderQuantumLinks();
-        this.startPulseAnimation();
+        this.element.addEventListener('mousemove', this.handleMove.bind(this));
+        this.element.addEventListener('mouseleave', this.handleLeave.bind(this));
     }
 
-    renderStarMap() {
-        const container = document.createElement('div');
-        container.className = 'star-map';
+    handleMove(e) {
+        const rect = this.element.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width - 0.5) * this.rotationRange;
+        const y = ((e.clientY - rect.top) / rect.height - 0.5) * -this.rotationRange * 2;
 
-        this.nodes.skills.forEach(skill => {
-            const node = document.createElement('div');
-            node.className = 'star-node';
-            node.innerHTML = `
-        <div class="skill-progress" 
-             style="--progress: ${skill.level}%"></div>
-        <span class="skill-name">${skill.name}</span>
-      `;
-            container.appendChild(node);
-        });
-
-        document.querySelector('.profile-box').appendChild(container);
+        this.element.style.transform = `
+            rotateX(${y}deg)
+            rotateY(${x}deg)
+            translateZ(40px)
+        `;
     }
 
-    renderQuantumLinks() {
-        const container = document.createElement('div');
-        container.className = 'quantum-link';
-
-        this.nodes.links.forEach(link => {
-            const anchor = document.createElement('a');
-            anchor.className = 'q-link';
-            anchor.href = link.url;
-            anchor.target = '_blank';
-            anchor.innerHTML = `
-        <i class="fab fa-${link.icon}"></i>
-      `;
-            container.appendChild(anchor);
-        });
-
-        document.querySelector('.profile-box').appendChild(container);
-    }
-
-    startPulseAnimation() {
-        const avatar = document.querySelector('.profile-image');
-        let scale = 1;
-
-        const pulse = () => {
-            scale = scale === 1 ? 0.95 : 1;
-            avatar.style.transform = `scale(${scale})`;
-            requestAnimationFrame(pulse);
-        };
-
-        pulse();
+    handleLeave() {
+        this.element.style.transform = 'translateZ(20px)';
     }
 }
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
-    new ProfileWidgets().init();
+    new ProfileWidgets();
 });
