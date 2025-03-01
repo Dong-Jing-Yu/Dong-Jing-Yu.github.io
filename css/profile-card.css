@@ -67,15 +67,14 @@
 /* ================= 技能进度系统 ================= */
 .status-panel {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     padding: 1.5rem;
     width: 100%;
 }
 
 .skill-item {
-    min-width: 250px;
-    margin: 0;
+    min-width: 280px;
     padding: 1.5rem;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
@@ -99,7 +98,7 @@
 .skill-header i {
     font-size: 1.6rem;
     width: 36px;
-        height: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,7 +118,7 @@
 }
 
 .skill-name {
-font-size: 1rem;
+    font-size: 1rem;
     color: #e2e8f0;
     letter-spacing: 0.5px;
 }
@@ -148,6 +147,7 @@ font-size: 1rem;
     height: 100%;
     position: relative;
     border-radius: 6px;
+    overflow: hidden;
 }
 
 .progress::after {
@@ -165,15 +165,18 @@ font-size: 1rem;
     animation: gradient-wave 3s linear infinite;
 }
 
-@keyframes precise-glow {
-    0% {
-        left: -60%;
-    }
-
-    100% {
-        left: 120%;
-    }
+.glow-track {
+    width: 60%;
+    height: 100%;
+    position: absolute;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.4) 30%,
+            transparent 70%);
+    animation: precise-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    clip-path: inset(0 -20px 0 0);
 }
+
 @keyframes gradient-wave {
     0% {
         background-position: 100% 0;
@@ -183,24 +186,14 @@ font-size: 1rem;
         background-position: -100% 0;
     }
 }
-/* 移动端适配 */
-@media (max-width: 480px) {
-    .status-panel {
-        grid-template-columns: 1fr;
-    }
-}
-.glow-track {
-    width: 60%;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(255, 255, 255, 0.4) 30%,
-            transparent 70%);
-    animation: precise-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
 
-@keyframes glow {
+@keyframes precise-glow {
+    0% {
+        left: -60%;
+    }
+
     100% {
-        left: calc(100% + 20px);
+        left: 120%;
     }
 }
 
@@ -259,6 +252,14 @@ font-size: 1rem;
 
 /* ================= 响应式设计 ================= */
 @media (max-width: 768px) {
+    .status-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .skill-item {
+        min-width: auto;
+    }
+
     .skill-cloud {
         min-height: 240px;
         padding: 1rem;
@@ -266,5 +267,11 @@ font-size: 1rem;
 
     .skill-node {
         --radius: 100px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .status-panel {
+        grid-template-columns: repeat(2, minmax(200px, 1fr));
     }
 }
