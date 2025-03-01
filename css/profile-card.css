@@ -67,19 +67,26 @@
 /* ================= 技能进度系统 ================= */
 .status-panel {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* 关键修改 */
+    gap: 1.2rem;
     padding: 1.5rem;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .skill-item {
-    min-width: 280px;
-    padding: 1.5rem;
+    width: 100%;
+    /* 新增 */
+    min-width: 0;
+    /* 允许内容收缩 */
+    padding: 1.2rem;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     transition: all 0.3s ease;
     transform: translateZ(20px);
+    box-sizing: border-box;
+    /* 移除固定min-width */
 }
 
 .skill-item:hover {
@@ -90,6 +97,7 @@
 }
 
 .skill-header {
+    min-width: 0;
     display: flex;
     align-items: center;
     margin-bottom: 0.8rem;
@@ -110,6 +118,8 @@
 }
 
 .skill-meta {
+    gap: 0.5rem;
+        /* 元素间最小间距 */
     flex: 1;
     margin-left: 1.2rem;
     display: flex;
@@ -121,11 +131,17 @@
     font-size: 1rem;
     color: #e2e8f0;
     letter-spacing: 0.5px;
+        max-width: 70%;
+            /* 名称最大占70% */
+            flex-shrink: 1;
+            /* 允许收缩 */
 }
 
 .skill-percent {
     font-family: 'Courier New', monospace;
     font-size: 1.1rem;
+    flex-shrink: 0;
+        /* 禁止收缩 */
     background: linear-gradient(45deg, #7c3aed, #4f46e5);
     -webkit-background-clip: text;
     background-clip: text;
@@ -251,27 +267,21 @@
 }
 
 /* ================= 响应式设计 ================= */
-@media (max-width: 768px) {
-    .status-panel {
-        grid-template-columns: 1fr;
+/* 响应式调整 */
+@media (max-width: 480px) {
+    .skill-name {
+        max-width: 60%;
+        font-size: 0.9rem;
     }
 
-    .skill-item {
-        min-width: auto;
-    }
-
-    .skill-cloud {
-        min-height: 240px;
-        padding: 1rem;
-    }
-
-    .skill-node {
-        --radius: 100px;
+    .skill-percent {
+        font-size: 0.85rem;
     }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-    .status-panel {
-        grid-template-columns: repeat(2, minmax(200px, 1fr));
+/* 小屏幕平板优化 */
+@media (min-width: 481px) and (max-width: 768px) {
+    .skill-name {
+        max-width: 65%;
     }
 }
