@@ -395,7 +395,7 @@ function print_banner() {
     printf "${blue}##                                              ##\n"
     printf "${blue}####  ############# NetHunter ####################\n"
     printf "${blue}####  ############ (网络猎人) ####################\n"
-    printf "${blue}by东经雨(提供汉化)${reset}\n\n"
+    printf "${blue}提供汉化:东经雨${reset}\n\n"
 }
 
 

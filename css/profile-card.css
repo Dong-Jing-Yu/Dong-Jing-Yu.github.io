@@ -66,34 +66,47 @@
 
 /* ================= 技能进度系统 ================= */
 .status-panel {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    /* 关键修改 */
-    gap: 1.2rem;
     padding: 1.5rem;
-    width: 100%;
-    box-sizing: border-box;
+    background: linear-gradient(152deg,
+            rgba(16, 23, 42, 0.9) 0%,
+            rgba(30, 41, 59, 0.9) 100%);
 }
 
 .skill-item {
-    width: 100%;
-    /* 新增 */
-    min-width: 0;
-    /* 允许内容收缩 */
+    margin: 1.5rem 0;
     padding: 1.2rem;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     transform: translateZ(20px);
-    box-sizing: border-box;
-    /* 移除固定min-width */
+    position: relative;
+    overflow: hidden;
 }
 
 .skill-item:hover {
-    background: linear-gradient(90deg,
+    background: linear-gradient(95deg,
             rgba(124, 58, 237, 0.05) 0%,
-            rgba(16, 23, 42, 0.2) 100%);
+            rgba(16, 23, 42, 0.15) 100%);
     transform: translateZ(30px);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.1);
+}
+
+.skill-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.05) 50%,
+            transparent 100%);
+    transition: left 0.6s ease;
+}
+
+.skill-item:hover::after {
+    left: 150%;
 }
 
 .skill-header {
@@ -118,23 +131,22 @@
 }
 
 .skill-meta {
-    gap: 0.5rem;
-        /* 元素间最小间距 */
-    flex: 1;
-    margin-left: 1.2rem;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    /* 两列布局 */
     align-items: baseline;
+    gap: 0.8rem;
+    width: 100%;
 }
 
 .skill-name {
-    font-size: 1rem;
-    color: #e2e8f0;
-    letter-spacing: 0.5px;
-        max-width: 70%;
-            /* 名称最大占70% */
-            flex-shrink: 1;
-            /* 允许收缩 */
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+    /* 动态字体大小 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    line-height: 1.3;
 }
 
 .skill-percent {
@@ -148,6 +160,8 @@
     color: transparent;
     font-weight: 600;
 }
+
+
 
 .skill-bar {
     height: 8px;
@@ -268,20 +282,24 @@
 
 /* ================= 响应式设计 ================= */
 /* 响应式调整 */
-@media (max-width: 480px) {
-    .skill-name {
-        max-width: 60%;
-        font-size: 0.9rem;
+@media (max-width: 768px) {
+    .status-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .skill-meta {
+        grid-template-columns: 1fr;
+        /* 移动端单列 */
     }
 
     .skill-percent {
-        font-size: 0.85rem;
+        padding-left: 0;
+        margin-top: 0.3rem;
     }
 }
 
-/* 小屏幕平板优化 */
-@media (min-width: 481px) and (max-width: 768px) {
+@media (min-width: 769px) and (max-width: 1024px) {
     .skill-name {
-        max-width: 65%;
+        max-width: 60%;
     }
 }

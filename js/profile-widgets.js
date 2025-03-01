@@ -12,13 +12,37 @@ class ProfileWidgets {
     }
 
     initSkillsProgress() {
+        // 延迟执行确保动画可见
         setTimeout(() => {
             document.querySelectorAll('.progress').forEach(progress => {
-                const targetWidth = progress.style.width;
+                const targetWidth = getComputedStyle(progress).getPropertyValue('--progress');
                 progress.style.width = '0';
-                void progress.offsetWidth; // 触发重绘
-                progress.style.transition = 'width 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+
+                // 强制重绘
+                void progress.offsetWidth;
+
+                // 应用动画
                 progress.style.width = targetWidth;
+
+                // 动态更新百分比数字
+                const percentElement = progress.closest('.skill-item').querySelector('.skill-percent');
+                let current = 0;
+                const target = parseInt(targetWidth);
+                const duration = 1200;
+                const startTime = Date.now();
+
+                const updatePercent = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    current = Math.floor(progress * target);
+                    percentElement.textContent = `${current}%`;
+
+                    if (progress < 1) {
+                        requestAnimationFrame(updatePercent);
+                    }
+                };
+
+                requestAnimationFrame(updatePercent);
             });
         }, 500);
     }
