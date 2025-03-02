@@ -64,23 +64,152 @@
     }
 }
 
-/* ================= 技能进度系统 ================= */
+/* ================= 状态面板容器 ================= */
 .status-panel {
+    position: relative;
     padding: 1.5rem;
+    margin: 1rem 0;
     background: linear-gradient(152deg,
             rgba(16, 23, 42, 0.9) 0%,
             rgba(30, 41, 59, 0.9) 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    z-index: 1;
+    transform-style: preserve-3d;
+    perspective: 1000px;
 }
 
+/* ================= 动态背景层 ================= */
+.status-panel::before,
+.status-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* 噪点纹理层 */
+.status-panel::before {
+    background:
+        radial-gradient(circle at 50% 0%,
+            rgba(124, 58, 237, 0.1) 0%,
+            transparent 60%),
+        repeating-linear-gradient(-45deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(124, 58, 237, 0.05) 2px,
+            rgba(124, 58, 237, 0.05) 4px);
+    animation: starry-bg 20s linear infinite;
+}
+
+/* 星空粒子层 */
+.status-panel::after {
+    background-image:
+        radial-gradient(circle at 20% 30%,
+            rgba(255, 255, 255, 0.1) 0.5px,
+            transparent 1px),
+        radial-gradient(circle at 80% 70%,
+            rgba(255, 255, 255, 0.1) 0.5px,
+            transparent 1px);
+    background-size: 200px 200px;
+    animation:
+        stars-move 40s linear infinite,
+        particle-pulse 5s ease-in-out infinite;
+}
+
+/* ================= 金属边框效果 ================= */
+.status-panel {
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    box-shadow:
+        0 0 16px rgba(124, 58, 237, 0.1),
+        inset 0 0 12px rgba(255, 255, 255, 0.05),
+        0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.status-panel::after {
+    border-radius: 16px;
+    background: linear-gradient(120deg,
+            rgba(255, 255, 255, 0.03) 0%,
+            rgba(255, 255, 255, 0) 30%,
+            rgba(255, 255, 255, 0.03) 70%);
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    padding: 1px;
+}
+
+@keyframes starry-bg {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 400px 400px;
+    }
+}
+
+/* ================= 动态星空粒子 ================= */
+.status-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 20% 30%,
+            rgba(255, 255, 255, 0.1) 0.5px,
+            transparent 1px),
+        radial-gradient(circle at 80% 70%,
+            rgba(255, 255, 255, 0.1) 0.5px,
+            transparent 1px);
+    background-size: 200px 200px;
+    animation: stars-move 40s linear infinite;
+}
+
+@keyframes stars-move {
+    0% {
+        background-position: 0 0, 100px 100px;
+    }
+
+    100% {
+        background-position: 400px 400px, 500px 500px;
+    }
+}
+
+/* ================= 金属边框效果 ================= */
+.status-panel {
+    box-shadow:
+        0 0 16px rgba(124, 58, 237, 0.1),
+        inset 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+.status-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    pointer-events: none;
+    background: linear-gradient(120deg,
+            rgba(255, 255, 255, 0.03) 0%,
+            rgba(255, 255, 255, 0) 30%,
+            rgba(255, 255, 255, 0.03) 70%);
+    mask: linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    padding: 1px;
+}
+
+/* ================= 技能项样式 ================= */
 .skill-item {
+    position: relative;
     margin: 1.5rem 0;
     padding: 1.2rem;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     transform: translateZ(20px);
-    position: relative;
     overflow: hidden;
+    backdrop-filter: blur(4px);
 }
 
 .skill-item:hover {
@@ -88,9 +217,12 @@
             rgba(124, 58, 237, 0.05) 0%,
             rgba(16, 23, 42, 0.15) 100%);
     transform: translateZ(30px);
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.1);
+    box-shadow:
+        0 4px 16px rgba(124, 58, 237, 0.1),
+        inset 0 0 8px rgba(124, 58, 237, 0.1);
 }
 
+/* 流光扫描效果 */
 .skill-item::after {
     content: '';
     position: absolute;
@@ -103,10 +235,7 @@
             rgba(255, 255, 255, 0.05) 50%,
             transparent 100%);
     transition: left 0.6s ease;
-}
-
-.skill-item:hover::after {
-    left: 150%;
+    z-index: -1;
 }
 
 .skill-header {
@@ -139,45 +268,83 @@
     width: 100%;
 }
 
+.skill-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
 .skill-name {
     font-size: clamp(0.9rem, 2.5vw, 1rem);
-    /* 动态字体大小 */
+    font-weight: 500;
+    color: #e2e8f0;
+    letter-spacing: 0.5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0;
-    line-height: 1.3;
+    position: relative;
+}
+
+.skill-name::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 30px;
+    height: 1px;
+    background: linear-gradient(90deg, #7c3aed, transparent);
 }
 
 .skill-percent {
-    font-family: 'Courier New', monospace;
+    font-family: 'Fira Code', monospace;
     font-size: 1.1rem;
-    flex-shrink: 0;
-        /* 禁止收缩 */
+    font-weight: 600;
     background: linear-gradient(45deg, #7c3aed, #4f46e5);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: rgba(124, 58, 237, 0.1);
+    transition: all 0.3s ease;
 }
 
 
 
 .skill-bar {
     height: 8px;
-    margin-top: 0.6rem;
-    background: rgba(16, 23, 42, 0.4);
+    margin-top: 0.8rem;
+    background: linear-gradient(90deg,
+            rgba(16, 23, 42, 0.6) 0%,
+            rgba(30, 41, 59, 0.6) 100%);
     border-radius: 6px;
     overflow: hidden;
     position: relative;
-    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2);
+    box-shadow:
+        inset 0 1px 4px rgba(0, 0, 0, 0.3),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.05);
 }
 
 .progress {
     height: 100%;
     position: relative;
     border-radius: 6px;
-    overflow: hidden;
+    width: 0;
+    transition: width 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* 动态渐变背景 */
+.progress::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+            rgba(124, 58, 237, 1) 0%,
+            rgba(79, 70, 229, 1) 50%,
+            rgba(124, 58, 237, 1) 100%);
+    background-size: 200% 100%;
+    animation: gradient-wave 3s linear infinite;
 }
 
 .progress::after {
@@ -195,16 +362,20 @@
     animation: gradient-wave 3s linear infinite;
 }
 
+/* 流光效果 */
 .glow-track {
-    width: 60%;
-    height: 100%;
     position: absolute;
+    width: 60%;
+    height: 120%;
+    top: -10%;
     background: linear-gradient(90deg,
             transparent 0%,
-            rgba(255, 255, 255, 0.4) 30%,
-            transparent 70%);
-    animation: precise-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    clip-path: inset(0 -20px 0 0);
+            rgba(255, 255, 255, 0.3) 50%,
+            transparent 100%);
+    animation:
+        precise-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+        glow-rotate 5s linear infinite;
+    transform-origin: left center;
 }
 
 @keyframes gradient-wave {
@@ -230,22 +401,128 @@
 /* ================= 技能星云系统 ================= */
 .skill-cloud {
     position: relative;
-    min-height: 300px;
-    padding: 2rem;
+    width: 240px;
+    height: 240px;
+    margin: 20px auto;
+    overflow: visible;
+    perspective: 800px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .skill-node {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform:
-        translate(-50%, -50%) translate(calc(cos(var(--angle)) * var(--radius)),
-            calc(sin(var(--angle)) * var(--radius))) translateZ(40px);
-    --radius: 140px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center center;
+    transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    will-change: transform, opacity;
+    filter: drop-shadow(0 0 3px currentColor);
+}
+
+.node-core {
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    border-radius: 50%;
+    transition: inherit;
+    position: relative;
+    animation: particle-float 3s ease-in-out infinite;
+}
+
+.skill-node span {
+    position: absolute;
+    left: 16px;
+    opacity: 0;
+    white-space: nowrap;
+    transition: inherit;
+    font-size: 0.75em;
+    pointer-events: none;
+}
+
+.skill-node:hover {
+    z-index: 10 !important;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.skill-node:hover .node-core {
+    transform: scale(2);
+    box-shadow: 0 0 15px currentColor;
+}
+
+.skill-node:hover span {
+    opacity: 1;
+    transform: translateX(6px);
+}
+
+@keyframes particle-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/* ================= 动画关键帧 ================= */
+@keyframes starry-bg {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 400px 400px;
+    }
+}
+
+@keyframes stars-move {
+    0% {
+        background-position: 0 0, 100px 100px;
+    }
+
+    100% {
+        background-position: 400px 400px, 500px 500px;
+    }
+}
+
+@keyframes particle-pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes gradient-wave {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+@keyframes precise-glow {
+    0% {
+        left: -60%;
+    }
+
+    100% {
+        left: 120%;
+    }
+}
+
+@keyframes glow-rotate {
+    100% {
+        transform: rotate(15deg);
+    }
 }
 
 .node-core {
