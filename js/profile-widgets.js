@@ -1,8 +1,22 @@
 class ProfileWidgets {
     constructor() {
+        // 添加安全初始化检查
+        if (!this.checkDomElements()) return;
+
         this.init3DSystem();
-        this.initSkillsProgress();  
+        this.initSkillsProgress();
         this.createSkillCloud();
+    }
+
+    checkDomElements() {
+        const requiredSelectors = ['.card-3d', '.progress', '.skill-cloud'];
+        return requiredSelectors.every(selector => {
+            if (!document.querySelector(selector)) {
+                console.warn(`Required element ${selector} not found`);
+                return false;
+            }
+            return true;
+        });
     }
 
     init3DSystem() {

@@ -4,21 +4,55 @@
         "title": "量子计算架构实践",
         "excerpt": "探索基于量子纠缠的分布式计算模型...",
         "date": "2024-03-15",
+        "url": "/posts/quantum-computing",
         "tags": [
             "量子计算",
             "架构设计"
         ],
-        "cover": "/img/avatar.png"
+        "cover": "/img/posts/quantum.jpg"
     },
     {
         "id": 2,
         "title": "神经接口协议解析",
         "excerpt": "新一代脑机接口的安全通信协议...",
         "date": "2024-03-14",
+        "url": "/posts/neural-interface",
         "tags": [
             "神经科学",
             "网络安全"
         ],
-        "cover": "/img/avatar.png"
+        "cover": "/img/posts/neural.jpg"
+    },
+    {
+        "id": 3,
+        "title": "测试文字极限",
+        "excerpt": "",
+        "date": "2024-03-14",
+        "url": "https://www.bilibili.com/",
+        "tags": [
+            "测试",
+            "测试1",
+            "测试2",
+            "测试3",
+            "测试4",
+            "测试5"
+        ],
+        "cover": "/img/posts/neural.jpg"
+    },
+    {
+        "id": 4,
+        "title": "bzd",
+        "excerpt": "",
+        "date": "2024-03-14",
+        "url": "https://www.bilibili.com/",
+        "tags": [
+            "测试",
+            "测试1",
+            "测试2",
+            "测试3",
+            "测试4",
+            "测试5"
+        ],
+        "cover": "/img/posts/neural.jpg"
     }
 ]
