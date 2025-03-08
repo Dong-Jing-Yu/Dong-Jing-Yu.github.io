@@ -1,0 +1,84 @@
+/* ================= 博客主容器 ================= */
+.blog-container {
+    display: grid;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ================= 文章卡片 ================= */
+.article-card {
+    background: rgba(16, 18, 27, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.article-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 0%,
+            rgba(100, 220, 255, 0.1) 50%,
+            transparent 100%);
+    transform: rotate(30deg);
+    animation: shine 8s infinite;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-150%) rotate(30deg);
+    }
+
+    100% {
+        transform: translateX(150%) rotate(30deg);
+    }
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 173, 181, 0.3);
+}
+
+/* ================= 文章元数据 ================= */
+.article-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9em;
+    color: #7f8fa4;
+}
+
+.tag-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background: rgba(0, 173, 181, 0.2);
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.8em;
+}
+
+/* ================= 响应式布局 ================= */
+@media (min-width: 768px) {
+    .blog-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .blog-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
