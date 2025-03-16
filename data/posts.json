@@ -1,13 +1,13 @@
 [
     {
         "id": 1,
-        "title": "量子计算架构实践",
-        "excerpt": "探索基于量子纠缠的分布式计算模型...",
+        "title": "极域工具合集",
+        "excerpt": "有关破解极域电子教室的工具合集...",
         "date": "2024-03-15",
-        "url": "/posts/quantum-computing",
+        "url": "https://jiyukiller.github.io/",
         "tags": [
-            "量子计算",
-            "架构设计"
+            "计算机",
+            "破解"
         ],
         "cover": "/img/posts/quantum.jpg"
     },
