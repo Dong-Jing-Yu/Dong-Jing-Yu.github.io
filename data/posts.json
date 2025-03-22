@@ -13,13 +13,13 @@
     },
     {
         "id": 2,
-        "title": "神经接口协议解析",
-        "excerpt": "新一代脑机接口的安全通信协议...",
+        "title": "MC客户端",
+        "excerpt": "将MoD的光影还有Java整合在了一起...",
         "date": "2024-03-14",
-        "url": "/posts/neural-interface",
+        "url": "https://1drv.ms/u/c/7bf012c8c4477160/IQTs7ywq02SmRpTPgCD_8FvEAfUtnpbCORVuvXNJ80wlTQo",
         "tags": [
-            "神经科学",
-            "网络安全"
+            "我的世界",
+            "整合包"
         ],
         "cover": "/img/posts/neural.jpg"
     },
