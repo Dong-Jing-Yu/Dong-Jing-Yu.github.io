@@ -31,28 +31,8 @@
         "url": "https://www.bilibili.com/",
         "tags": [
             "测试",
-            "测试1",
-            "测试2",
-            "测试3",
-            "测试4",
-            "测试5"
+            "测试1"
         ],
-        "cover": "/img/posts/neural.jpg"
-    },
-    {
-        "id": 4,
-        "title": "bzd",
-        "excerpt": "",
-        "date": "2024-03-14",
-        "url": "https://www.bilibili.com/",
-        "tags": [
-            "测试",
-            "测试1",
-            "测试2",
-            "测试3",
-            "测试4",
-            "测试5"
-        ],
-        "cover": "/img/posts/neural.jpg"
+        "cover": "None"
     }
 ]
