@@ -8,20 +8,18 @@
         "tags": [
             "计算机",
             "破解"
-        ],
-        "cover": "/img/posts/quantum.jpg"
+        ]
     },
     {
         "id": 2,
-        "title": "MC客户端",
-        "excerpt": "将MoD的光影还有Java整合在了一起...",
+        "title": "MC整合包",
+        "excerpt": "将Mod和光影整合在了一起...",
         "date": "2024-03-14",
-        "url": "https://1drv.ms/u/c/7bf012c8c4477160/IQTs7ywq02SmRpTPgCD_8FvEAfUtnpbCORVuvXNJ80wlTQo",
+        "url": "https://cccimg.com/down.php/533ad24af80c2345755e557029e6a138.zip&DJY",
         "tags": [
             "我的世界",
             "整合包"
-        ],
-        "cover": "/img/posts/neural.jpg"
+        ]
     },
     {
         "id": 3,
@@ -32,7 +30,6 @@
         "tags": [
             "测试",
             "测试1"
-        ],
-        "cover": "None"
+        ]
     }
 ]

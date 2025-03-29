@@ -109,7 +109,7 @@ class BlogEngine {
         this.container.addEventListener('click', (e) => {
             const card = e.target.closest('.article-card');
             if (card?.dataset.url) {
-                window.location.href = card.dataset.url;
+                window.open(card.dataset.url, '_blank', 'noopener,noreferrer');
             }
         });
 
@@ -179,36 +179,29 @@ class BlogEngine {
     }
 
     createArticleCard(post) {
-        if (!post.url) console.warn('文章缺少URL:', post);
-
         return `
-      <article class="article-card" 
-               data-url="${post.url || '#'}"
-               data-tags="${post.tags?.join(',') || ''}">
-        <div class="article-media">
-          <img src="${post.cover || '/img/placeholder.jpg'}" 
-               alt="${post.title || '未命名文章'}" 
-               loading="lazy"
-               class="article-cover">
-        </div>
-        <div class="article-content">
-          <div class="article-meta">
-            <time>${this.formatDate(post.date)}</time>
-            <div class="tag-list">
-              ${post.tags?.map(tag => `
-                <span class="tag">${tag}</span>
-              `).join('') || ''}
-            </div>
+    <article class="article-card" 
+             data-url="${post.url || '#'}"
+             data-tags="${post.tags?.join(',') || ''}">
+      <div class="article-content">
+        <div class="article-meta">
+          <time>${this.formatDate(post.date)}</time>
+          <div class="tag-list">
+            ${post.tags?.map(tag => `
+              <span class="tag">${tag}</span>
+            `).join('') || ''}
           </div>
-          <h3 class="article-title">${post.title || '未命名文章'}</h3>
-          <p class="article-excerpt">
-            ${this.truncateExcerpt(post.excerpt || '')}
-          </p>
         </div>
-        <div class="card-glow"></div>
-      </article>
-    `;
+        <h3 class="article-title">${post.title || '未命名文章'}</h3>
+        <p class="article-excerpt">
+          ${this.truncateExcerpt(post.excerpt || '')}
+        </p>
+      </div>
+      <div class="card-glow"></div>
+    </article>
+  `;
     }
+
 
     // ================= 工具方法 =================
     truncateExcerpt(text) {

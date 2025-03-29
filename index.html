@@ -9,6 +9,57 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/profile-card.css">
     <link rel="stylesheet" href="/css/blog.css">
+    <style>
+        /* Live2D 定制样式 */
+        .live2d-container {
+            position: relative;
+            min-height: 400px;
+            margin-bottom: 2rem;
+            background: rgba(16, 18, 27, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+    
+        #live2d-widget canvas {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+    
+        .model-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+    
+        .model-btn {
+            padding: 8px 16px;
+            background: rgba(0, 173, 181, 0.3);
+            border: 1px solid #00adb5;
+            border-radius: 20px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+    
+        .model-btn:hover {
+            background: rgba(0, 173, 181, 0.6);
+            transform: translateY(-2px);
+        }
+    
+        @media (max-width: 768px) {
+            .live2d-container {
+                min-height: 300px;
+            }
+    
+            #live2d-widget canvas {
+                transform: scale(0.8);
+            }
+        }
+    </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -26,6 +77,14 @@
         </header>
 
         <aside class="profile-box">
+
+            <div class="card-3d live2d-container">
+                <div id="live2d-widget"></div>
+                <div class="model-controls">
+                    <button class="model-btn" data-action="switch">切换模型</button>
+                    <button class="model-btn" data-action="zoom">缩放</button>
+                </div>
+            </div>
             <!-- 基础信息卡 -->
             <div class="card-3d">
                 <div class="hologram-container">
@@ -46,11 +105,11 @@
                         <i class="fab fa-js"></i>
                         <div class="skill-meta">
                             <span class="skill-name">JavaScript</span>
-                            <span class="skill-percent">85%</span>
+                            <span class="skill-percent" data-progress="85">0%</span>
                         </div>
                     </div>
                     <div class="skill-bar">
-                        <div class="progress" style="--progress:85%">
+                        <div class="progress" style="--progress: 85%">
                             <div class="glow-track"></div>
                         </div>
                     </div>
@@ -70,11 +129,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 技能星云 -->
-            <div class="card-3d skill-cloud">
-                <!-- JS动态生成 -->
-            </div>
         </aside>
         <div class="blog-section">
             <div class="blog-controls">
@@ -87,6 +141,63 @@
     <script src="/js/hitokoto-title-animations.js"></script>
     <script src="/js/profile-widgets.js"></script>
     <script src="/js/blog.js" type="module"></script>
+
+    <script>
+            // 初始化 Live2D
+            function initLive2D() {
+                L2Dwidget.init({
+                    model: {
+                        jsonPath: 'https://cdn.jsdelivr.net/npm/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json',
+                        scale: 0.8,
+                    },
+                    display: {
+                        position: 'right', // 右侧定位
+                        width: 220,       // 模型宽度
+                        height: 440,      // 模型高度
+                        hOffset: -30,     // 水平偏移
+                        vOffset: -20      // 垂直偏移
+                    },
+                    mobile: {
+                        show: true,      // 移动端显示
+                        scale: 0.6       // 移动端缩放
+                    },
+                    react: {
+                        opacityDefault: 1,    // 默认透明度
+                        opacityOnHover: 0.8   // 悬停透明度
+                    }
+                });
+            }
+
+            // 添加控制功能
+            document.querySelectorAll('.model-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const action = this.dataset.action;
+                    switch (action) {
+                        case 'switch':
+                            const models = [
+                                'shizuku',
+                                'haru',
+                                'hibiki',
+                                'koharu'
+                            ];
+                            const randomModel = models[Math.floor(Math.random() * models.length)];
+                            L2Dwidget.setModel(`https://cdn.jsdelivr.net/npm/live2d-widget-model-${randomModel}@latest`);
+                            break;
+                        case 'zoom':
+                            const scale = Math.random() * 0.5 + 0.7;
+                            L2Dwidget.setScale(scale);
+                            break;
+                    }
+                });
+            });
+
+            // 页面加载后初始化
+            window.addEventListener('DOMContentLoaded', () => {
+                initLive2D();
+                new ProfileWidgets();
+            });
+    </script>
+        
 </body>
 
 </html>

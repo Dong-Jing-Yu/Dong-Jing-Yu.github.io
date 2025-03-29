@@ -1,184 +1,101 @@
 class ProfileWidgets {
+    // 更新后的配置
+    static CONFIG = {
+        PROGRESS: {
+            ANIMATION_DELAY: 300,  // 优化延迟时间
+            ANIMATION_DURATION: 1200
+        }
+    };
     constructor() {
-        // 添加安全初始化检查
         if (!this.checkDomElements()) return;
 
         this.init3DSystem();
         this.initSkillsProgress();
-        this.createSkillCloud();
+        this.setupEventListeners();
     }
 
+    // 更新DOM检查
     checkDomElements() {
-        const requiredSelectors = ['.card-3d', '.progress', '.skill-cloud'];
-        return requiredSelectors.every(selector => {
-            if (!document.querySelector(selector)) {
-                console.warn(`Required element ${selector} not found`);
-                return false;
-            }
-            return true;
+        const selectors = ['.card-3d', '.progress'];
+        return selectors.every(selector => {
+            const exists = !!document.querySelector(selector);
+            !exists && console.warn(`Missing required element: ${selector}`);
+            return exists;
         });
     }
 
+    // 3D卡片系统（保留）
     init3DSystem() {
-        document.querySelectorAll('.card-3d').forEach(card => {
-            new Card3D(card, 14);
-        });
+        try {
+            document.querySelectorAll('.card-3d').forEach(card => {
+                new Card3D(card, 14);
+            });
+        } catch (error) {
+            console.error('3D system initialization failed:', error);
+        }
     }
 
+    // 技能进度条（保留）
     initSkillsProgress() {
-        // 获取所有进度条元素
         const progressBars = document.querySelectorAll('.progress');
 
         // 先重置所有进度条状态
         progressBars.forEach(progress => {
             progress.style.width = '0';
-            progress.style.opacity = '0'; // 初始隐藏
+            progress.style.opacity = '0';
         });
 
-        // 延迟执行动画
         setTimeout(() => {
-            progressBars.forEach((progress) => {
-                const targetWidth = progress.style.getPropertyValue('--progress');
+            progressBars.forEach(progress => {
                 const parentItem = progress.closest('.skill-item');
                 const percentElement = parentItem.querySelector('.skill-percent');
 
-                // 显示元素
-                progress.style.opacity = '1';
+                // 双重数据源保障
+                const targetValue = parseInt(percentElement.dataset.progress) ||
+                    parseInt(progress.style.getPropertyValue('--progress')) ||
+                    0;
 
-                // 开始宽度动画
-                this.animateProgress(progress, targetWidth, percentElement);
+                progress.style.opacity = '1';
+                this.animateProgress(progress, targetValue, percentElement);
             });
-        }, 500); // 适当延迟保证元素加载完成
+        }, ProfileWidgets.CONFIG.PROGRESS.ANIMATION_DELAY);
     }
 
-    animateProgress(progressElement, targetWidth, percentElement) {
-        const duration = 1500; // 动画时长
+    // 进度条动画（保留）
+    animateProgress(element, targetValue, displayElement) {
         const startTime = Date.now();
-        const startWidth = 0;
-        const targetValue = parseInt(targetWidth);
+        const duration = ProfileWidgets.CONFIG.PROGRESS.ANIMATION_DURATION;
 
         const update = () => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
+            const currentValue = Math.floor(targetValue * progress);
 
-            // 更新宽度
-            const currentWidth = startWidth + (targetValue - startWidth) * progress;
-            progressElement.style.width = `${currentWidth}%`;
-
-            // 更新数字
-            percentElement.textContent = `${Math.floor(currentWidth)}%`;
+            // 同步更新进度条和数字
+            element.style.width = `${currentValue}%`;
+            displayElement.textContent = `${currentValue}%`;
 
             if (progress < 1) {
                 requestAnimationFrame(update);
             } else {
-                // 动画完成时确保精确值
-                progressElement.style.width = targetWidth;
-                percentElement.textContent = `${targetValue}%`;
+                element.style.width = `${targetValue}%`;
+                displayElement.textContent = `${targetValue}%`;
             }
         };
 
-        // 强制初始布局更新
-        progressElement.getBoundingClientRect();
+        // 强制布局更新
+        element.getBoundingClientRect();
         requestAnimationFrame(update);
     }
 
-    createSkillCloud() {
-        const cloud = document.querySelector('.skill-cloud');
-        cloud.innerHTML = '';
-
-        const skills = [
-            { name: 'React', level: 90 },
-            { name: 'Vue', level: 85 },
-            { name: 'Node', level: 92 },
-            { name: 'Docker', level: 80 },
-            { name: 'K8S', level: 75 },
-            { name: 'AWS', level: 88 }
-        ];
-
-        // 动态布局参数
-        const CONFIG = {
-            BASE_RADIUS: 0.6,
-            BASE_SCALE: 0.6,
-            SCALE_FACTOR: 120,
-            FOLLOW_STRENGTH: 0.6
-        };
-
-        const rect = cloud.getBoundingClientRect();
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const baseRadius = Math.min(centerX, centerY) * CONFIG.BASE_RADIUS;
-
-        const nodes = skills.map((skill, i) => ({
-            x: centerX + Math.cos((i * Math.PI * 2) / skills.length) * baseRadius,
-            y: centerY + Math.sin((i * Math.PI * 2) / skills.length) * baseRadius,
-            radius: 4 + (skill.level / 25)
-        }));
-
-        this.resolveCollisions(nodes, 16);
-
-        nodes.forEach((pos, i) => {
-            const node = document.createElement('div');
-            node.className = 'skill-node';
-            const baseScale = CONFIG.BASE_SCALE + (skills[i].level / CONFIG.SCALE_FACTOR);
-
-            node.style.cssText = `
-                left: ${pos.x}px;
-                top: ${pos.y}px;
-                color: hsl(${(i * 60) % 360}, 70%, 75%);
-                transform: 
-                    translate(-50%, -50%)
-                    scale(${baseScale});
-                z-index: ${Math.floor(skills[i].level)};
-            `;
-
-            node.innerHTML = `
-                <div class="node-core" style="animation-delay: ${i * 0.1}s"></div>
-                <span>${skills[i].name}<br><em>${skills[i].level}%</em></span>
-            `;
-
-            // 增强版鼠标交互
-            node.addEventListener('mousemove', (e) => {
-                const rect = node.getBoundingClientRect();
-                const dx = (e.clientX - rect.left - rect.width / 2) * CONFIG.FOLLOW_STRENGTH;
-                const dy = (e.clientY - rect.top - rect.height / 2) * CONFIG.FOLLOW_STRENGTH;
-                node.style.transform = `
-                    translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))
-                    scale(${baseScale * 1.4})
-                `;
-            });
-
-            node.addEventListener('mouseleave', () => {
-                node.style.transform = `
-                    translate(-50%, -50%)
-                    scale(${baseScale})
-                `;
-            });
-
-            cloud.appendChild(node);
-        });
-
-        // 优化resize处理
-        const debounceResize = this.debounce(() => this.createSkillCloud(), 200);
-        window.addEventListener('resize', debounceResize);
+    finalizeAnimation(element, value, display) {
+        element.style.width = `${value}%`;
+        display.textContent = `${value}%`;
     }
 
-    resolveCollisions(nodes, padding = 16) {
-        nodes.forEach((a, i) => {
-            nodes.slice(i + 1).forEach(b => {
-                const dx = a.x - b.x;
-                const dy = a.y - b.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const minDistance = a.radius + b.radius + padding;
-
-                if (distance < minDistance) {
-                    const adjust = (minDistance - distance) / distance * 0.6;
-                    a.x += dx * adjust;
-                    a.y += dy * adjust;
-                    b.x -= dx * adjust;
-                    b.y -= dy * adjust;
-                }
-            });
-        });
+    // 清理不需要的方法
+    setupEventListeners() {
+        // 保留基础事件监听
     }
 
     debounce(func, wait) {
@@ -198,14 +115,15 @@ class Card3D {
     }
 
     init() {
-        this.element.addEventListener('mousemove', this.handleMove.bind(this));
+        this.handleMove = this.handleMove.bind(this);
+        this.element.addEventListener('mousemove', this.handleMove);
         this.element.addEventListener('mouseleave', this.handleLeave.bind(this));
     }
 
     handleMove(e) {
-        const rect = this.element.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width - 0.5) * this.rotationRange;
-        const y = ((e.clientY - rect.top) / rect.height - 0.5) * -this.rotationRange * 2;
+        const { left, top, width, height } = this.element.getBoundingClientRect();
+        const x = ((e.clientX - left) / width - 0.5) * this.rotationRange;
+        const y = ((e.clientY - top) / height - 0.5) * -this.rotationRange * 2;
 
         this.element.style.transform = `
             rotateX(${y}deg)

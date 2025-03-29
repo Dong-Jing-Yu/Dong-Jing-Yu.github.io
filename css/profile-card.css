@@ -299,6 +299,8 @@
 .skill-percent {
     font-family: 'Fira Code', monospace;
     font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+        /* 保持数字宽度一致 */
     font-weight: 600;
     background: linear-gradient(45deg, #7c3aed, #4f46e5);
     -webkit-background-clip: text;
@@ -331,7 +333,7 @@
     position: relative;
     border-radius: 6px;
     width: 0;
-    transition: width 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition: width 0.3s ease-out, opacity 0.5s ease;
 }
 
 /* 动态渐变背景 */
@@ -398,74 +400,6 @@
     }
 }
 
-/* ================= 技能星云系统 ================= */
-.skill-cloud {
-    position: relative;
-    width: 240px;
-    height: 240px;
-    margin: 20px auto;
-    overflow: visible;
-    perspective: 800px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.skill-node {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    transform-origin: center center;
-    transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    will-change: transform, opacity;
-    filter: drop-shadow(0 0 3px currentColor);
-}
-
-.node-core {
-    width: 8px;
-    height: 8px;
-    background: currentColor;
-    border-radius: 50%;
-    transition: inherit;
-    position: relative;
-    animation: particle-float 3s ease-in-out infinite;
-}
-
-.skill-node span {
-    position: absolute;
-    left: 16px;
-    opacity: 0;
-    white-space: nowrap;
-    transition: inherit;
-    font-size: 0.75em;
-    pointer-events: none;
-}
-
-.skill-node:hover {
-    z-index: 10 !important;
-    filter: drop-shadow(0 0 8px currentColor);
-}
-
-.skill-node:hover .node-core {
-    transform: scale(2);
-    box-shadow: 0 0 15px currentColor;
-}
-
-.skill-node:hover span {
-    opacity: 1;
-    transform: translateX(6px);
-}
-
-@keyframes particle-float {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-6px);
-    }
-}
-
 /* ================= 动画关键帧 ================= */
 @keyframes starry-bg {
     0% {
@@ -525,24 +459,6 @@
     }
 }
 
-.node-core {
-    width: 24px;
-    height: 24px;
-    background: rgba(124, 58, 237, 0.9);
-    border-radius: 50%;
-    margin-bottom: 0.5rem;
-    position: relative;
-}
-
-.node-core::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border: 2px solid rgba(124, 58, 237, 0.5);
-    border-radius: 50%;
-    animation: node-glow 2s infinite;
-}
-
 @keyframes node-glow {
 
     0%,
@@ -558,23 +474,7 @@
 }
 
 /* ================= 响应式设计 ================= */
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .status-panel {
-        grid-template-columns: 1fr;
-    }
-
-    .skill-meta {
-        grid-template-columns: 1fr;
-        /* 移动端单列 */
-    }
-
-    .skill-percent {
-        padding-left: 0;
-        margin-top: 0.3rem;
-    }
-}
-
+/* 移动端适配增强 */
 @media (min-width: 769px) and (max-width: 1024px) {
     .skill-name {
         max-width: 60%;
