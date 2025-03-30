@@ -1,9 +1,74 @@
 /* ================= 基础样式 ================= */
 .profile-box {
-    --glow-color: #7c3aed;
-    --depth: 30px;
-    gap: 1.5rem;
-    perspective: 1200px;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+/* ================= 身份信息容器 ================= */
+.identity-info {
+    position: relative;
+    padding: 1rem;
+    /* 减少内边距 */
+    text-align: center;
+    margin: 0.8rem 0;
+    /* 调整外边距 */
+}
+/* ================= 霓虹标题 ================= */
+.neon-text {
+    font-size: 1.8rem;  /* 适当缩小字体 */
+    color: #00fffc;
+    text-shadow:
+        0 0 10px #00adb5,
+        0 0 20px #00adb5,
+        0 0 30px #00adb5;
+    animation: neon-pulse 2s ease-in-out infinite alternate;
+    margin-bottom: 0.8rem;
+    letter-spacing: 2px;
+    font-family: 'Fira Code', monospace;
+}
+
+@keyframes neon-pulse {
+    from {
+        text-shadow: 0 0 5px #00adb5;
+    }
+
+    to {
+        text-shadow: 0 0 25px #00adb5;
+    }
+}
+
+/* ================= 发光文本 ================= */
+.glow-text {
+    font-size: 1.2rem;
+    color: #a0f3ff;
+    filter: drop-shadow(0 0 8px rgba(160, 243, 255, 0.6));
+    margin-bottom: 1.2rem;
+    position: relative;
+}
+
+/* ================= 银河徽章 ================= */
+.galaxy-badge {
+    display: inline-block;
+    padding: 0.6rem 1.8rem;
+    background: rgba(0, 173, 181, 0.15);
+    border-radius: 25px;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    border: 1px solid rgba(0, 173, 181, 0.3);
+    animation: badge-glow 3s ease-in-out infinite;
+}
+
+@keyframes badge-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px rgba(0, 173, 181, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(0, 173, 181, 0.4);
+    }
 }
 
 /* ================= 3D卡片系统 ================= */
