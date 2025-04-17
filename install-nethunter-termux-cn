@@ -357,9 +357,37 @@ function fix_profile_bash() {
 }
 
 function fix_resolv_conf() {
-    ## 我们没有 systemd，所以使用 Quad9 DNS 服务器的静态条目
-    echo "nameserver 9.9.9.9" > $CHROOT/etc/resolv.conf
-    echo "nameserver 149.112.112.112" >> $CHROOT/etc/resolv.conf
+    local resolv_conf="$CHROOT/etc/resolv.conf"
+    local etc_dir="${resolv_conf%/*}"  # 提取目录路径
+
+    # 检查CHROOT目录是否存在
+    if [[ ! -d "$CHROOT" ]]; then
+        echo "错误：CHROOT目录 '$CHROOT' 不存在" >&2
+        return 1
+    fi
+
+    # 确保/etc目录存在
+    if [[ ! -d "$etc_dir" ]]; then
+        echo "正在创建目录 $etc_dir"
+        if ! mkdir -p "$etc_dir"; then
+            echo "错误：无法创建目录 $etc_dir" >&2
+            return 1
+        fi
+    fi
+
+    # 写入DNS配置并检查IO错误
+    if ! echo "nameserver 9.9.9.9" > "$resolv_conf"; then
+        echo "错误：无法写入 $resolv_conf" >&2
+        return 1
+    fi
+
+    if ! echo "nameserver 149.112.112.112" >> "$resolv_conf"; then
+        echo "错误：无法追加到 $resolv_conf" >&2
+        return 1
+    fi
+
+    echo "DNS配置已成功更新"
+    return 0
 }
 
 function fix_sudo() {
@@ -395,7 +423,7 @@ function print_banner() {
     printf "${blue}##                                              ##\n"
     printf "${blue}####  ############# NetHunter ####################\n"
     printf "${blue}####  ############ (网络猎人) ####################\n"
-    printf "${blue}提供汉化:东经雨${reset}\n\n"
+    printf "${blue}提供汉化:东经雨 1.3${reset}\n\n"
 }
 
 
