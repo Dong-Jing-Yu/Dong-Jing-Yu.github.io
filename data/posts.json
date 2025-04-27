@@ -12,7 +12,7 @@
     },
     {
         "id": 2,
-        "title": "MC整合包(1.19.2)",
+        "title": "MC生存整合包(1.19.2)",
         "excerpt": "将Mod和光影整合在了一起...",
         "date": "2025-04-06",
         "url": "https://cccimg.com/down.php/c0b95ad9cb352f4a909df968498f6ea7.zip&DJY",
@@ -23,19 +23,8 @@
     },
     {
         "id": 3,
-        "title": "MC整合包(1.16.5)",
-        "excerpt": "将Mod和光影整合在了一起...",
-        "date": "2025-03-29",
-        "url": "https://cccimg.com/down.php/e1af7a5625ab4011badb1ab197fec0e1.zip&DJY",
-        "tags": [
-            "我的世界",
-            "整合包"
-        ]
-    },
-    {
-        "id": 4,
         "title": "临时网盘",
-        "excerpt": "随手搭建的网盘...",
+        "excerpt": "随手搭建的网盘.../n注意现在的流量已经无了(流量限制在5MB/s)",
         "date": "2025-03-31",
         "url": "http://154.9.227.98/",
         "tags": [
