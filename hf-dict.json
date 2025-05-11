@@ -1,0 +1,13 @@
+{
+    "static": {
+      "Explore": "探索",
+      "Spaces": "空间"
+    },
+    "regex": [
+      {
+        "pattern": "/Updated (\\d+) days? ago/",
+        "replace": "更新于$1天前",
+        "flags": "gi"
+      }
+    ]
+  }
