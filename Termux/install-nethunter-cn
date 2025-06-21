@@ -4,7 +4,12 @@ VERSION=2024091801
 BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
 
-
+full_arm64=1fe0305803dbac57111e04cbc36b1e2d7365a293171474b83616c9df91cf89a05d1d0313488974f3cd2c8131e5ecdc25d5230091743c458bbac41ca109d8b12f
+minimal_arm64=061502bb2c28b4f1202eebea70d3bbe2f5c61e9f43fa7ab16080dbcfdf41f9363b2a00e29598502cdc8f5d15f7b116e336f043b1924aaabc4b08841f281601f8
+nano_arm64=6a244b108aec3d612e50e03d9af4c503ce636f7d5bb752f0f7a893a21e5384657da4579cfb1a8ef6902914e6f46d4720c6f385c00a5bc950803c7f5d141133db
+#full-armhf
+#minimal-armhf
+#nano-armhf
 
 function unsupported_arch() {
     printf "${red}"
@@ -63,50 +68,44 @@ function get_arch() {
 }
 
 function set_strings() {
-    echo \
-    && echo "" 
-    ####
-    if [[ ${SYS_ARCH} == "arm64" ]];
-    then
-        echo "[1] NetHunter ARM64 (完整版)"
-        echo "[2] NetHunter ARM64 (最小版)"
-        echo "[3] NetHunter ARM64 (微型版)"
-        read -p "输入你想安装的镜像: " wimg
-        if (( $wimg == "1" ));
-        then
-            wimg="full"
-        elif (( $wimg == "2" ));
-        then
-            wimg="minimal"
-        elif (( $wimg == "3" ));
-        then
-            wimg="nano"
-        else
-            wimg="full"
-        fi
-    elif [[ ${SYS_ARCH} == "armhf" ]];
-    then
-        echo "[1] NetHunter ARMhf (完整版)"
-        echo "[2] NetHunter ARMhf (最小版)"
-        echo "[3] NetHunter ARMhf (微型版)"
-        read -p "输入你想安装的镜像: " wimg
-        if [[ "$wimg" == "1" ]]; then
-            wimg="full"
-        elif [[ "$wimg" == "2" ]]; then
-            wimg="minimal"
-        elif [[ "$wimg" == "3" ]]; then
-            wimg="nano"
-        else
-            wimg="full"
-        fi
-    fi
-    ####
+	echo && echo ""
+	####
+	if [[ ${SYS_ARCH} == "arm64" ]]; then
+		echo "[1] NetHunter ARM64 (完整版)"
+		echo "[2] NetHunter ARM64 (最小版)"
+		echo "[3] NetHunter ARM64 (微型版)"
+		read -p "输入你想安装的镜像: " wimg
+		if (($wimg == "1")); then
+			wimg="full"
+		elif (($wimg == "2")); then
+			wimg="minimal"
+		elif (($wimg == "3")); then
+			wimg="nano"
+		else
+			wimg="full"
+		fi
+	elif [[ ${SYS_ARCH} == "armhf" ]]; then
+		echo "[1] NetHunter ARMhf (完整版)"
+		echo "[2] NetHunter ARMhf (最小版)"
+		echo "[3] NetHunter ARMhf (微型版)"
+		read -p "输入你想安装的镜像: " wimg
+		if [[ "$wimg" == "1" ]]; then
+			wimg="full"
+		elif [[ "$wimg" == "2" ]]; then
+			wimg="minimal"
+		elif [[ "$wimg" == "3" ]]; then
+			wimg="nano"
+		else
+			wimg="full"
+		fi
+	fi
+	####
+
+	CHROOT=kali-${SYS_ARCH}
+	IMAGE_NAME=kali-nethunter-rootfs-${wimg}-${SYS_ARCH}.tar.xz
+}
 
 
-    CHROOT=kali-${SYS_ARCH}
-    IMAGE_NAME=kali-nethunter-rootfs-${wimg}-${SYS_ARCH}.tar.xz
-    SHA_NAME=${IMAGE_NAME}.sha512sum
-}    
 
 function prepare_fs() {
     unset KEEP_CHROOT
@@ -124,9 +123,6 @@ function cleanup() {
         if ask "删除已下载的rootfs文件?" "N"; then
         if [ -f "${IMAGE_NAME}" ]; then
                 rm -f "${IMAGE_NAME}"
-        fi
-        if [ -f "${SHA_NAME}" ]; then
-                rm -f "${SHA_NAME}"
         fi
         fi
     fi
@@ -152,12 +148,6 @@ function check_dependencies() {
     apt upgrade -y
 }
 
-
-function get_url() {
-    ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    SHA_URL="${BASE_URL}/${SHA_NAME}"
-}
-
 function get_rootfs() {
     unset KEEP_IMAGE
     if [ -f "${IMAGE_NAME}" ]; then
@@ -170,28 +160,26 @@ function get_rootfs() {
         fi
     fi
     printf "${blue}[*] 正在下载 rootfs...${reset}\n\n"
-    get_url
-    wget "${EXTRA_ARGS}" --continue "${ROOTFS_URL}"
-}
-
-function get_sha() {
-    if [ -z $KEEP_IMAGE ]; then
-        printf "\n${blue}[*] 获取 SHA ... ${reset}\n\n"
-        get_url
-        if [ -f "${SHA_NAME}" ]; then
-            rm -f "${SHA_NAME}"
-        fi
-        wget "${EXTRA_ARGS}" --continue "${SHA_URL}"
-    fi
+    ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
+    wget -c "${ROOTFS_URL}"
 }
 
 function verify_sha() {
     if [ -z $KEEP_IMAGE ]; then
         printf "\n${blue}[*] 正在验证 rootfs 完整性...${reset}\n\n"
-        sha512sum -c "$SHA_NAME" || {
-            printf "${red} Rootfs 已损坏。请重新运行安装程序或手动下载文件\n${reset}"
+        NAME=${wimg}_${SYS_ARCH}
+        hash=$(sha512sum "$IMAGE_NAME" | awk '{print $1}')
+        # sha512sum "kali-nethunter-rootfs-nano-arm64.tar.xz" | awk '{print $1}'
+        printf "${blue}[*] 计算SHA-512 哈希: ${hash}${reset}\n"
+        printf "${blue}[*] 验证SHA-512 哈希: ${!NAME}${reset}\n"
+        # 检查是否在已知哈希字典中
+        if [ "${!NAME}" = "$hash" ]; then
+            printf "${green} Rootfs SHA-512 哈希匹配\n${reset}"
+            return 0
+        else
+            printf "${red} Rootfs 已损坏,请重新运行安装程序或手动下载文件\n${reset}"
             exit 1
-        }
+        fi
     fi
 }
 
@@ -423,7 +411,7 @@ function print_banner() {
     printf "${blue}##                                              ##\n"
     printf "${blue}####  ############# NetHunter ####################\n"
     printf "${blue}####  ############ (网络猎人) ####################\n"
-    printf "${blue}提供汉化:东经雨 1.3${reset}\n\n"
+    printf "${blue}提供汉化:东经雨 2.3${reset}\n\n"
 }
 
 
@@ -438,14 +426,6 @@ blue='\033[1;34m'
 light_cyan='\033[1;96m'
 reset='\033[0m'
 
-EXTRA_ARGS=""
-if [[ ! -z $1 ]]; then
-    EXTRA_ARGS=$1
-    if [[ $EXTRA_ARGS != "--no-check-certificate" ]]; then
-        EXTRA_ARGS=""
-    fi
-fi
-
 cd "$HOME"
 print_banner
 get_arch
@@ -453,7 +433,6 @@ set_strings
 prepare_fs
 check_dependencies
 get_rootfs
-get_sha
 verify_sha
 extract_rootfs
 create_launcher
