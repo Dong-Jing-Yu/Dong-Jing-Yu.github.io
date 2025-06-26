@@ -1,3 +1,4 @@
+删件(JYPath+".云");
 void onMsg(Object msg) {
     经雨 data = new 经雨();
     data.解析(msg);
@@ -11,5 +12,9 @@ void onMsg(Object msg) {
     long Time = data.Time;
     List AtList = data.AtList;
     Object OriginMsg = data.OriginMsg;
+    if(ChatType == 1) {
+      
+    } else {
+
+    }
   }
-  写("云", "测试", "成功");
