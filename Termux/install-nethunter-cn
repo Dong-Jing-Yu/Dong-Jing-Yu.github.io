@@ -72,8 +72,8 @@ function set_strings() {
 	####
 	if [[ ${SYS_ARCH} == "arm64" ]]; then
 		echo "[1] NetHunter ARM64 (完整版)"
-		echo "[2] NetHunter ARM64 (最小版)"
-		echo "[3] NetHunter ARM64 (微型版)"
+		echo "[2] NetHunter ARM64 (精简版)"
+		echo "[3] NetHunter ARM64 (纳米版)"
 		read -p "输入你想安装的镜像: " wimg
 		if (($wimg == "1")); then
 			wimg="full"
@@ -86,8 +86,8 @@ function set_strings() {
 		fi
 	elif [[ ${SYS_ARCH} == "armhf" ]]; then
 		echo "[1] NetHunter ARMhf (完整版)"
-		echo "[2] NetHunter ARMhf (最小版)"
-		echo "[3] NetHunter ARMhf (微型版)"
+		echo "[2] NetHunter ARMhf (精简版)"
+		echo "[3] NetHunter ARMhf (纳米版)"
 		read -p "输入你想安装的镜像: " wimg
 		if [[ "$wimg" == "1" ]]; then
 			wimg="full"
