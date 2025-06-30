@@ -151,7 +151,7 @@ function check_dependencies() {
 function get_rootfs() {
     unset KEEP_IMAGE
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "找到现有的rootfs文件。是否删除并下载新的?" "N"; then
+        if ask "找到现有的${IMAGE_NAME}文件. 是否删除并下载新的?" "N"; then
             rm -f "${IMAGE_NAME}"
         else
             printf "${yellow}[!] 使用现有的 rootfs 归档文件${reset}\n"
