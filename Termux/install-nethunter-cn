@@ -415,7 +415,7 @@ function print_banner() {
     printf "${blue}####  ############# NetHunter ####################\n"
     printf "${blue}####  ############ (网络猎人) ####################\n"
     printf "${blue}提供汉化:东经雨 2.5${reset}\n\n"
-    printf "${blue}技术支持:ChatGPT, Claude, DeepSeek${reset}\n\n"
+    printf "${green}技术支持:ChatGPT, Claude, DeepSeek${reset}\n\n"
 }
 
 
