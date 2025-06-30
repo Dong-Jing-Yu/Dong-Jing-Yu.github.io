@@ -134,7 +134,7 @@ function check_dependencies() {
     ##apt update -y &> /dev/null
     apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
 
-    for i in proot tar axel wget; do
+    for i in proot tar axel wget bsdtar; do
         if [ -e "$PREFIX"/bin/$i ]; then
             echo "  $i 已就绪"
         else
@@ -151,7 +151,7 @@ function check_dependencies() {
 function get_rootfs() {
     unset KEEP_IMAGE
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "找到现有的镜像文件。是否删除并下载新的?" "N"; then
+        if ask "找到现有的rootfs文件。是否删除并下载新的?" "N"; then
             rm -f "${IMAGE_NAME}"
         else
             printf "${yellow}[!] 使用现有的 rootfs 归档文件${reset}\n"
@@ -184,10 +184,13 @@ function verify_sha() {
 }
 
 function extract_rootfs() {
-    if [ -z $KEEP_CHROOT ]; then
-        printf "\n${blue}[*] 正在解压 rootfs... ${reset}\n\n"
-        proot --link2symlink tar -xf "$IMAGE_NAME" 2> /dev/null || :
-    else        
+    if [ -z "$KEEP_CHROOT" ]; then
+        printf "\n${blue}[*] 正在解压 rootfs(proot + bsdtar)... ${reset}\n\n"
+        proot --link2symlink bsdtar -xf "$IMAGE_NAME" 2> /dev/null || {
+            echo -e "${red}[!] 解压失败，请检查镜像文件是否完整${reset}"
+            exit 1
+        }
+    else
         printf "${yellow}[!] 使用现有的 rootfs 目录${reset}\n"
     fi
 }
@@ -411,7 +414,7 @@ function print_banner() {
     printf "${blue}##                                              ##\n"
     printf "${blue}####  ############# NetHunter ####################\n"
     printf "${blue}####  ############ (网络猎人) ####################\n"
-    printf "${blue}提供汉化:东经雨 2.3${reset}\n\n"
+    printf "${blue}提供汉化:东经雨 2.4${reset}\n\n"
 }
 
 
