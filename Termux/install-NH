@@ -3,7 +3,7 @@
 VERSION=2024091801
 BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
-
+# https://gitlab.com/kalilinux/nethunter/build-scripts/kali-nethunter-rootless/raw/main/install-nethunter-termux 原版连链接
 full_arm64=1fe0305803dbac57111e04cbc36b1e2d7365a293171474b83616c9df91cf89a05d1d0313488974f3cd2c8131e5ecdc25d5230091743c458bbac41ca109d8b12f
 minimal_arm64=061502bb2c28b4f1202eebea70d3bbe2f5c61e9f43fa7ab16080dbcfdf41f9363b2a00e29598502cdc8f5d15f7b116e336f043b1924aaabc4b08841f281601f8
 nano_arm64=6a244b108aec3d612e50e03d9af4c503ce636f7d5bb752f0f7a893a21e5384657da4579cfb1a8ef6902914e6f46d4720c6f385c00a5bc950803c7f5d141133db
@@ -120,7 +120,7 @@ function prepare_fs() {
 
 function cleanup() {
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "删除已下载的rootfs文件?" "N"; then
+        if ask "删除已下载的${IMAGE_NAME}文件?" "N"; then
         if [ -f "${IMAGE_NAME}" ]; then
                 rm -f "${IMAGE_NAME}"
         fi
@@ -131,6 +131,7 @@ function cleanup() {
 function check_dependencies() {
     printf "${blue}\n[*] 检查包依赖...${reset}\n"
     ## Workaround for termux-app issue #1283 (https://github.com/termux/termux-app/issues/1283)
+    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' $PREFIX/etc/apt/sources.list && apt update && apt upgrade -y # 清华源
     ##apt update -y &> /dev/null
     apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
 
@@ -147,7 +148,6 @@ function check_dependencies() {
     done
     apt upgrade -y
 }
-
 function get_rootfs() {
     unset KEEP_IMAGE
     if [ -f "${IMAGE_NAME}" ]; then
@@ -186,6 +186,7 @@ function verify_sha() {
 function extract_rootfs() {
     if [ -z "$KEEP_CHROOT" ]; then
         printf "\n${blue}[*] 正在解压 rootfs... ${reset}\n\n"
+        # proot --link2symlink tar -xf "$IMAGE_NAME" 2> /dev/null || :
         pv "$IMAGE_NAME" | proot --link2symlink tar --exclude='dev/*' -xJpf - || {
             echo -e "${red}[!] 解压失败，请检查镜像文件是否完整${reset}"
             exit 1
@@ -261,7 +262,6 @@ EOF
     if [ ! -f "${NH_SHORTCUT}" ]; then
         ln -s "${NH_LAUNCHER}" "${NH_SHORTCUT}" >/dev/null
     fi
-   
 }
 
 function create_kex_launcher() {
@@ -414,8 +414,8 @@ function print_banner() {
     printf "${blue}##                                              ##\n"
     printf "${blue}####  ############# NetHunter ####################\n"
     printf "${blue}####  ############ (网络猎人) ####################\n"
-    printf "${blue}提供汉化:东经雨 3.0${reset}\n"
-    printf "${green}技术支持:ChatGPT, Claude, DeepSeek${reset}\n\n"
+    printf "${blue}脚本优化:东经雨 3.5${reset}\n"
+    printf "${yellow}技术支持:ChatGPT, Claude, DeepSeek${reset}\n\n"
 }
 
 
@@ -448,19 +448,23 @@ fix_resolv_conf
 fix_sudo
 create_kex_launcher
 fix_uid
-
+sed -i "s@http://http.kali.org/kali@https://mirrors.tuna.tsinghua.edu.cn/kali@g" kali-${SYS_ARCH}/etc/apt/sources.list # 换清华源
 print_banner
 printf "${green}[=] Kali NetHunter 已成功安装到 Termux${reset}\n\n"
-printf "${green}[+] 要启动 Kali NetHunter，请输入:${reset}\n"
-printf "${green}[+] nethunter             # 启动 NetHunter 命令行界面${reset}\n"
+printf "${green}[+] 要启动 Kali NetHunter,请输入:${reset}\n"
+
+printf "${green}[+] nethunter             # 启动 NetHunter${reset}\n"
+printf "${green}[+] nh                    # 快速启动 NetHunter${reset}\n"
+printf "${green}[+] exit                  # 在 Kali NetHunter 中退出${reset}\n\n"
+printf "${green}[=] 以下的 nethunter 同样可以使用 nh 来快速启动${reset}\n"
+
 printf "${green}[+] nethunter kex passwd  # 设置 KeX 密码${reset}\n"
 printf "${green}[+] nethunter kex &       # 启动 NetHunter 图形界面${reset}\n"
 printf "${green}[+] nethunter kex stop    # 停止 NetHunter 图形界面${reset}\n"
 #printf "${green}[+] nethunter kex <command> # 在 NetHunter 环境中运行命令${reset}\n"
-printf "${green}[+] nethunter -r          # 以 root 身份运行 NetHunter${reset}\n"
+printf "${green}[+] nethunter -r          # 以 root 身份启动 NetHunter${reset}\n"
 #printf "${green}[+] nethunter -r kex passwd  # 为 root 设置 KeX 密码${reset}\n"
 #printf "${green}[+] nethunter kex &       # 以 root 身份启动 NetHunter 图形界面${reset}\n"
 #printf "${green}[+] nethunter kex stop    # 停止 NetHunter root 会话的图形界面${reset}\n"
 #printf "${green}[+] nethunter -r kex kill # 停止所有 NetHunter 图形界面会话${reset}\n"
 #printf "${green}[+] nethunter -r kex <command> # 以 root 身份在 NetHunter 环境中运行命令${reset}\n"
-printf "${green}[+] nh                    # NetHunter 的快捷方式${reset}\n\n"
