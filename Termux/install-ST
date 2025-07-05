@@ -2,7 +2,7 @@
 #
 # 酒馆安装脚本
 # 作者: 东经雨
-
+# awk -f <(curl -L l.tmoe.me/2.awk)
 echo -e "\033]0;酒馆安装\007"
 
 function ask() {
