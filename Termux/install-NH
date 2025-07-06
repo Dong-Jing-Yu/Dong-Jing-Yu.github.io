@@ -158,7 +158,7 @@ function prepare_fs() {
 
 function cleanup() {
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "是否删除已下载的 ${IMAGE_NAME} 文件？" "N"; then
+        if ask "是否删除已下载的 ${IMAGE_NAME} 文件？" "Y"; then
             log "INFO" "删除下载的镜像文件..."
             rm -f "${IMAGE_NAME}" || log "WARN" "无法删除文件: ${IMAGE_NAME}"
         fi
