@@ -4,24 +4,63 @@ VERSION=2024091801
 BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
 # https://gitlab.com/kalilinux/nethunter/build-scripts/kali-nethunter-rootless/raw/main/install-nethunter-termux 原版连链接
-full_arm64=1fe0305803dbac57111e04cbc36b1e2d7365a293171474b83616c9df91cf89a05d1d0313488974f3cd2c8131e5ecdc25d5230091743c458bbac41ca109d8b12f
-minimal_arm64=061502bb2c28b4f1202eebea70d3bbe2f5c61e9f43fa7ab16080dbcfdf41f9363b2a00e29598502cdc8f5d15f7b116e336f043b1924aaabc4b08841f281601f8
-nano_arm64=6a244b108aec3d612e50e03d9af4c503ce636f7d5bb752f0f7a893a21e5384657da4579cfb1a8ef6902914e6f46d4720c6f385c00a5bc950803c7f5d141133db
-#full-armhf
-#minimal-armhf
-#nano-armhf
+
+# SHA512 哈希值
+declare -A SHA512_HASHES=(
+    ["full_arm64"]="1fe0305803dbac57111e04cbc36b1e2d7365a293171474b83616c9df91cf89a05d1d0313488974f3cd2c8131e5ecdc25d5230091743c458bbac41ca109d8b12f"
+    ["minimal_arm64"]="061502bb2c28b4f1202eebea70d3bbe2f5c61e9f43fa7ab16080dbcfdf41f9363b2a00e29598502cdc8f5d15f7b116e336f043b1924aaabc4b08841f281601f8"
+    ["nano_arm64"]="6a244b108aec3d612e50e03d9af4c503ce636f7d5bb752f0f7a893a21e5384657da4579cfb1a8ef6902914e6f46d4720c6f385c00a5bc950803c7f5d141133db"
+    # 可以添加更多架构的哈希值
+)
+
+# 日志记录函数
+log() {
+    local level="$1"
+    shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    case "$level" in
+        "INFO")  printf "${blue}[INFO]${reset} [${timestamp}] $message\n" ;;
+        "WARN")  printf "${yellow}[WARN]${reset} [${timestamp}] $message\n" ;;
+        "ERROR") printf "${red}[ERROR]${reset} [${timestamp}] $message\n" ;;
+        "SUCCESS") printf "${green}[SUCCESS]${reset} [${timestamp}] $message\n" ;;
+        *) printf "[${timestamp}] $message\n" ;;
+    esac
+}
+
+# 错误处理函数
+error_exit() {
+    log "ERROR" "$1"
+    exit 1
+}
+
+# 检查命令是否存在
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# 进度条函数
+show_progress() {
+    local current=$1
+    local total=$2
+    local width=50
+    local percentage=$((current * 100 / total))
+    local completed=$((current * width / total))
+    local remaining=$((width - completed))
+    
+    printf "\r${blue}[进度]${reset} ["
+    printf "%*s" $completed "" | tr ' ' '='
+    printf "%*s" $remaining "" | tr ' ' '-'
+    printf "] %d%%" $percentage
+}
 
 function unsupported_arch() {
-    printf "${red}"
-    echo "[*] 不支持的架构\n\n"
-    printf "${reset}"
-    exit
+    error_exit "不支持的架构: $(getprop ro.product.cpu.abi)"
 }
 
 function ask() {
-    # http://djm.me/ask
     while true; do
-
         if [ "${2:-}" = "Y" ]; then
             prompt="Y/n"
             default=Y
@@ -33,33 +72,35 @@ function ask() {
             default=
         fi
 
-        # Ask the question
-        printf "${light_cyan}\n[?] "
+        printf "${light_cyan}[?] "
         read -p "$1 [$prompt] " REPLY
 
-        # Default?
         if [ -z "$REPLY" ]; then
             REPLY=$default
         fi
 
         printf "${reset}"
 
-        # Check if the reply is valid
         case "$REPLY" in
             Y*|y*) return 0 ;;
             N*|n*) return 1 ;;
+            *) log "WARN" "请输入 y 或 n" ;;
         esac
     done
 }
 
 function get_arch() {
-    printf "${blue}[*] 检查设备架构 ..."
-    case $(getprop ro.product.cpu.abi) in
+    log "INFO" "检查设备架构..."
+    
+    local cpu_abi=$(getprop ro.product.cpu.abi)
+    case "$cpu_abi" in
         arm64-v8a)
             SYS_ARCH=arm64
+            log "INFO" "检测到架构: ARM64"
             ;;
         armeabi|armeabi-v7a)
             SYS_ARCH=armhf
+            log "INFO" "检测到架构: ARMhf"
             ;;
         *)
             unsupported_arch
@@ -68,160 +109,225 @@ function get_arch() {
 }
 
 function set_strings() {
-	echo && echo ""
-	####
-	if [[ ${SYS_ARCH} == "arm64" ]]; then
-		echo "[1] NetHunter ARM64 (完整版)"
-		echo "[2] NetHunter ARM64 (精简版)"
-		echo "[3] NetHunter ARM64 (纳米版)"
-		read -p "输入你想安装的镜像: " wimg
-		if (($wimg == "1")); then
-			wimg="full"
-		elif (($wimg == "2")); then
-			wimg="minimal"
-		elif (($wimg == "3")); then
-			wimg="nano"
-		else
-			wimg="full"
-		fi
-	elif [[ ${SYS_ARCH} == "armhf" ]]; then
-		echo "[1] NetHunter ARMhf (完整版)"
-		echo "[2] NetHunter ARMhf (精简版)"
-		echo "[3] NetHunter ARMhf (纳米版)"
-		read -p "输入你想安装的镜像: " wimg
-		if [[ "$wimg" == "1" ]]; then
-			wimg="full"
-		elif [[ "$wimg" == "2" ]]; then
-			wimg="minimal"
-		elif [[ "$wimg" == "3" ]]; then
-			wimg="nano"
-		else
-			wimg="full"
-		fi
-	fi
-	####
+    local menu_options=()
+    local descriptions=()
+    
+    if [[ ${SYS_ARCH} == "arm64" ]]; then
+        menu_options=("full" "minimal" "nano")
+        descriptions=("NetHunter ARM64 (完整版 - 包含所有工具)" "NetHunter ARM64 (精简版 - 基本工具)" "NetHunter ARM64 (纳米版 - 最小安装)")
+    elif [[ ${SYS_ARCH} == "armhf" ]]; then
+        menu_options=("full" "minimal" "nano")
+        descriptions=("NetHunter ARMhf (完整版 - 包含所有工具)" "NetHunter ARMhf (精简版 - 基本工具)" "NetHunter ARMhf (纳米版 - 最小安装)")
+    fi
+    
+    echo
+    for i in "${!menu_options[@]}"; do
+        printf "${green}[%d]${reset} %s\n" $((i+1)) "${descriptions[$i]}"
+    done
+    echo
+    
+    while true; do
+        read -p "请选择要安装的镜像 (1-3，默认为1): " choice
+        choice=${choice:-1}
+        
+        if [[ "$choice" =~ ^[1-3]$ ]]; then
+            wimg="${menu_options[$((choice-1))]}"
+            log "INFO" "选择了: ${descriptions[$((choice-1))]}"
+            break
+        else
+            log "WARN" "请输入有效的选项 (1-3)"
+        fi
+    done
 
-	CHROOT=kali-${SYS_ARCH}
-	IMAGE_NAME=kali-nethunter-rootfs-${wimg}-${SYS_ARCH}.tar.xz
+    CHROOT=kali-${SYS_ARCH}
+    IMAGE_NAME=kali-nethunter-rootfs-${wimg}-${SYS_ARCH}.tar.xz
 }
-
-
 
 function prepare_fs() {
     unset KEEP_CHROOT
-    if [ -d ${CHROOT} ]; then
-        if ask "找到现有的rootfs目录。删除并创建新的目录?" "N"; then
-            rm -rf ${CHROOT}
+    if [ -d "${CHROOT}" ]; then
+        if ask "找到现有的 rootfs 目录 (${CHROOT})。是否删除并创建新的？" "N"; then
+            log "INFO" "删除现有的 rootfs 目录..."
+            rm -rf "${CHROOT}" || error_exit "无法删除现有目录"
         else
             KEEP_CHROOT=1
+            log "INFO" "保留现有的 rootfs 目录"
         fi
     fi
 } 
 
 function cleanup() {
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "删除已下载的${IMAGE_NAME}文件?" "N"; then
-        if [ -f "${IMAGE_NAME}" ]; then
-                rm -f "${IMAGE_NAME}"
-        fi
+        if ask "是否删除已下载的 ${IMAGE_NAME} 文件？" "N"; then
+            log "INFO" "删除下载的镜像文件..."
+            rm -f "${IMAGE_NAME}" || log "WARN" "无法删除文件: ${IMAGE_NAME}"
         fi
     fi
 } 
 
 function check_dependencies() {
-    printf "${blue}\n[*] 检查包依赖...${reset}\n"
-    ## Workaround for termux-app issue #1283 (https://github.com/termux/termux-app/issues/1283)
-    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' $PREFIX/etc/apt/sources.list && apt update && apt upgrade -y # 清华源
-    ##apt update -y &> /dev/null
-    apt-get update -y &> /dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &> /dev/null
+    log "INFO" "检查并安装依赖包..."
+    
+    # 备份原始 sources.list
+    if [ ! -f "$PREFIX/etc/apt/sources.list.bak" ]; then
+        cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
+    fi
+    
+    # 更新源到清华镜像
+    if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
+        log "INFO" "更新软件源到清华镜像..."
+        sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' "$PREFIX/etc/apt/sources.list"
+    fi
+    
+    # 更新包索引
+    log "INFO" "更新包索引..."
+    apt update -y &>/dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &>/dev/null
 
-    for i in proot tar axel wget pv; do
-        if [ -e "$PREFIX"/bin/$i ]; then
-            echo "  $i 已就绪"
+    local required_packages=("proot" "tar" "axel" "wget" "pv")
+    local missing_packages=()
+    
+    # 检查缺失的包
+    for package in "${required_packages[@]}"; do
+        if ! command_exists "$package"; then
+            missing_packages+=("$package")
         else
-            printf "正在安装 ${i}...\n"
-            apt install -y $i || {
-                printf "${red}错误:无法安装软件包。\n 正在退出。\n${reset}"
-            exit
-            }
+            log "INFO" "$package 已就绪"
         fi
     done
-    apt upgrade -y
+    
+    # 安装缺失的包
+    if [ ${#missing_packages[@]} -gt 0 ]; then
+        log "INFO" "安装缺失的包: ${missing_packages[*]}"
+        for package in "${missing_packages[@]}"; do
+            log "INFO" "正在安装 $package..."
+            apt install -y "$package" || error_exit "无法安装 $package"
+        done
+    fi
+    
+    log "INFO" "升级已安装的包..."
+    apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" &>/dev/null || log "WARN" "包升级过程中出现问题"
 }
+
 function get_rootfs() {
     unset KEEP_IMAGE
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "找到现有的${IMAGE_NAME}文件. 是否删除并下载新的?" "N"; then
-            rm -f "${IMAGE_NAME}"
+        if ask "找到现有的 ${IMAGE_NAME} 文件。是否删除并重新下载？" "N"; then
+            rm -f "${IMAGE_NAME}" || error_exit "无法删除现有文件"
         else
-            printf "${yellow}[!] 使用现有的 rootfs 归档文件${reset}\n"
+            log "INFO" "使用现有的 rootfs 归档文件"
             KEEP_IMAGE=1
             return
         fi
     fi
-    printf "${blue}[*] 正在下载 rootfs...${reset}\n\n"
+    
+    log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    wget -c "${ROOTFS_URL}"
+    
+    # 使用 axel 多线程下载（如果可用）
+    if command_exists axel; then
+        log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
+        axel -n 4 -a "${ROOTFS_URL}" || error_exit "下载失败"
+    else
+        log "INFO" "使用 wget 下载: ${ROOTFS_URL}"
+        wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
+            if [[ "$line" == *%* ]]; then
+                echo -ne "\r${blue}[下载]${reset} $line"
+            fi
+        done
+        echo
+    fi
+    
+    # 验证文件是否下载成功
+    if [ ! -f "${IMAGE_NAME}" ]; then
+        error_exit "下载失败: ${IMAGE_NAME} 文件不存在"
+    fi
+    
+    log "SUCCESS" "rootfs 下载完成"
 }
 
 function verify_sha() {
-    if [ -z $KEEP_IMAGE ]; then
-        printf "\n${blue}[*] 正在验证 rootfs 完整性...${reset}\n\n"
-        NAME=${wimg}_${SYS_ARCH}
-        hash=$(sha512sum "$IMAGE_NAME" | awk '{print $1}')
-        # sha512sum "kali-nethunter-rootfs-nano-arm64.tar.xz" | awk '{print $1}'
-        printf "${blue}[*] 计算SHA-512 哈希: ${hash}${reset}\n"
-        printf "${blue}[*] 验证SHA-512 哈希: ${!NAME}${reset}\n"
-        # 检查是否在已知哈希字典中
-        if [ "${!NAME}" = "$hash" ]; then
-            printf "${green} Rootfs SHA-512 哈希匹配\n${reset}"
-            return 0
-        else
-            printf "${red} Rootfs 已损坏,请重新运行安装程序或手动下载文件\n${reset}"
-            exit 1
-        fi
+    log "INFO" "验证 rootfs 完整性..."
+    
+    local hash_key="${wimg}_${SYS_ARCH}"
+    local expected_hash="${SHA512_HASHES[$hash_key]}"
+    
+    if [ -z "$expected_hash" ]; then
+        log "WARN" "未找到 $hash_key 的预期哈希值，跳过验证"
+        return 0
+    fi
+    
+    log "INFO" "计算 SHA-512 哈希值..."
+    local actual_hash=$(sha512sum "$IMAGE_NAME" | awk '{print $1}')
+    
+    if [ "$expected_hash" = "$actual_hash" ]; then
+        log "SUCCESS" "Rootfs SHA-512 哈希验证通过"
+        return 0
+    else
+        error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
     fi
 }
 
 function extract_rootfs() {
     if [ -z "$KEEP_CHROOT" ]; then
-        printf "\n${blue}[*] 正在解压 rootfs... ${reset}\n\n"
-        # proot --link2symlink tar -xf "$IMAGE_NAME" 2> /dev/null || :
-        pv "$IMAGE_NAME" | proot --link2symlink tar --exclude='dev/*' -xJpf - || {
-            echo -e "${red}[!] 解压失败，请检查镜像文件是否完整${reset}"
-            exit 1
-        }
+        log "INFO" "开始解压 rootfs..."
+        
+        # 显示解压进度
+        if command_exists pv; then
+            pv "$IMAGE_NAME" | proot --link2symlink tar --exclude='dev/*' -xJpf - 2>/dev/null || {
+                error_exit "解压失败，请检查镜像文件是否完整"
+            }
+        else
+            proot --link2symlink tar --exclude='dev/*' -xJpf "$IMAGE_NAME" 2>/dev/null || {
+                error_exit "解压失败，请检查镜像文件是否完整"
+            }
+        fi
+        
+        log "SUCCESS" "rootfs 解压完成"
     else
-        printf "${yellow}[!] 使用现有的 rootfs 目录${reset}\n"
+        log "INFO" "使用现有的 rootfs 目录"
     fi
 }
 
-
 function create_launcher() {
+    log "INFO" "创建启动器脚本..."
+    
     NH_LAUNCHER=${PREFIX}/bin/nethunter
     NH_SHORTCUT=${PREFIX}/bin/nh
+    
     cat > "$NH_LAUNCHER" <<- EOF
 #!/data/data/com.termux/files/usr/bin/bash -e
+
+# 错误处理
+set -euo pipefail
+
 cd \${HOME}
-## 在继续之前取消设置 termux-exec 的 LD_PRELOAD
+
+# 取消设置 termux-exec 的 LD_PRELOAD
 unset LD_PRELOAD
-## Libreoffice 的临时解决方案，还需要绑定一个虚拟的 /proc/version
+
+# 检查 rootfs 是否存在
+if [ ! -d "kali-arm64" ]; then
+    echo "错误: kali-arm64 目录不存在，请先运行安装脚本"
+    exit 1
+fi
+
+# Libreoffice 的临时解决方案
 if [ ! -f $CHROOT/root/.version ]; then
     touch $CHROOT/root/.version
 fi
 
-## 默认用户是 "kali"
+# 默认配置
 user="$USERNAME"
 home="/home/\$user"
 start="sudo -u kali /bin/bash"
 
-## NH 可以通过 "-r" 命令属性以 root 身份启动
-## 同时检查 kali 用户是否存在，如果不存在则以 root 身份启动
 if grep -q "kali" ${CHROOT}/etc/passwd; then
     KALIUSR="1";
 else
     KALIUSR="0";
 fi
+
+# 检查命令行参数
 if [[ \$KALIUSR == "0" || ("\$#" != "0" && ("\$1" == "-r" || "\$1" == "-R")) ]];then
     user="root"
     home="/\$user"
@@ -231,6 +337,7 @@ if [[ \$KALIUSR == "0" || ("\$#" != "0" && ("\$1" == "-r" || "\$1" == "-R")) ]];
     fi
 fi
 
+# 构建 proot 命令
 cmdline="proot \\
         --link2symlink \\
         -0 \\
@@ -254,66 +361,91 @@ else
     \$cmdline -c "\$cmd"
 fi
 EOF
-
+    log "INFO" "$NH_LAUNCHER"
     chmod 700 "$NH_LAUNCHER"
+    
+    # 创建快捷方式
     if [ -L "${NH_SHORTCUT}" ]; then
         rm -f "${NH_SHORTCUT}"
     fi
     if [ ! -f "${NH_SHORTCUT}" ]; then
         ln -s "${NH_LAUNCHER}" "${NH_SHORTCUT}" >/dev/null
     fi
+    
+    log "SUCCESS" "启动器创建完成"
 }
 
 function create_kex_launcher() {
+    log "INFO" "创建 KeX 启动器..."
     KEX_LAUNCHER=${CHROOT}/usr/bin/kex
     cat > $KEX_LAUNCHER <<- EOF
 #!/bin/bash
 
+# KeX 启动函数
 function start-kex() {
     if [ ! -f ~/.vnc/passwd ]; then
-        passwd-kex
+        echo "VNC 密码未设置，请先运行: nethunter kex passwd"
+        return 1
     fi
-    USR=\$(whoami)
-    if [ \$USR == "root" ]; then
+    
+    local USR=$(whoami)
+    local SCREEN
+    
+    if [ "$USR" == "root" ]; then
         SCREEN=":2"
     else
         SCREEN=":1"
     fi 
-    export MOZ_FAKE_NO_SANDBOX=1; export HOME=\${HOME}; export USER=\${USR}; LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgcc_s.so.1 nohup vncserver \$SCREEN >/dev/null 2>&1 </dev/null
-    starting_kex=1
-    return 0
+    
+    export MOZ_FAKE_NO_SANDBOX=1
+    export HOME=${HOME}
+    export USER=${USR}
+    
+    # 启动 VNC 服务器
+    if LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgcc_s.so.1 nohup vncserver "$SCREEN" >/dev/null 2>&1 </dev/null; then
+        echo "KeX 服务器已启动在显示器 $SCREEN"
+        starting_kex=1
+        return 0
+    else
+        echo "启动 KeX 服务器失败"
+        return 1
+    fi
 }
 
 function stop-kex() {
-    vncserver -kill :1 | sed s/"Xtigervnc"/"NetHunter KeX"/
-    vncserver -kill :2 | sed s/"Xtigervnc"/"NetHunter KeX"/
-    return $?
+    vncserver -kill :1 2>/dev/null | sed s/"Xtigervnc"/"NetHunter KeX"/ || true
+    vncserver -kill :2 2>/dev/null | sed s/"Xtigervnc"/"NetHunter KeX"/ || true
+    return 0
 }
 
 function passwd-kex() {
+    echo "设置 VNC 密码:"
     vncpasswd
     return $?
 }
 
 function status-kex() {
-    sessions=\$(vncserver -list | sed s/"TigerVNC"/"NetHunter KeX"/)
-    if [[ \$sessions == *"590"* ]]; then
-        printf "\n\${sessions}\n"
-        printf "\n你可以使用 KeX 客户端连接这些显示器.\n\n"
+    local sessions=$(vncserver -list 2>/dev/null | sed s/"TigerVNC"/"NetHunter KeX"/)
+    if [[ $sessions == *"590"* ]]; then
+        printf "\n%s\n" "$sessions"
+        printf "\n你可以使用 KeX 客户端连接这些显示器。\n\n"
     else
-        if [ ! -z \$starting_kex ]; then
-            printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启你的 termux 会话并重试.\n\n'
+        if [ -n "$starting_kex" ]; then
+            printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启 termux 会话并重试。\n\n'
+        else
+            printf '\n没有运行中的 KeX 会话。\n\n'
         fi
     fi
     return 0
 }
 
 function kill-kex() {
-    pkill Xtigervnc
-    return \$?
+    pkill Xtigervnc 2>/dev/null || true
+    echo "所有 KeX 会话已终止"
+    return 0
 }
 
-case \$1 in
+case "$1" in
     start)
         start-kex
         ;;
@@ -338,133 +470,159 @@ esac
 EOF
 
     chmod 700 $KEX_LAUNCHER
+    log "SUCCESS" "KeX 启动器创建完成"
 }
 
 function fix_profile_bash() {
-    ## Prevent attempt to create links in read only filesystem
-    if [ -f ${CHROOT}/root/.bash_profile ]; then
+    log "INFO" "修复 bash profile..."
+    if [ -f "${CHROOT}/root/.bash_profile" ]; then
         sed -i '/if/,/fi/d' "${CHROOT}/root/.bash_profile"
     fi
 }
 
 function fix_resolv_conf() {
+    log "INFO" "配置 DNS 解析..."
+    
     local resolv_conf="$CHROOT/etc/resolv.conf"
-    local etc_dir="${resolv_conf%/*}"  # 提取目录路径
+    local etc_dir="${resolv_conf%/*}"
 
-    # 检查CHROOT目录是否存在
     if [[ ! -d "$CHROOT" ]]; then
-        echo "错误：CHROOT目录 '$CHROOT' 不存在" >&2
-        return 1
+        error_exit "CHROOT 目录 '$CHROOT' 不存在"
     fi
 
-    # 确保/etc目录存在
     if [[ ! -d "$etc_dir" ]]; then
-        echo "正在创建目录 $etc_dir"
-        if ! mkdir -p "$etc_dir"; then
-            echo "错误：无法创建目录 $etc_dir" >&2
-            return 1
-        fi
+        log "INFO" "创建目录 $etc_dir"
+        mkdir -p "$etc_dir" || error_exit "无法创建目录 $etc_dir"
     fi
 
-    # 写入DNS配置并检查IO错误
-    if ! echo "nameserver 9.9.9.9" > "$resolv_conf"; then
-        echo "错误：无法写入 $resolv_conf" >&2
-        return 1
-    fi
+    # 配置多个 DNS 服务器以提高可靠性
+    cat > "$resolv_conf" <<EOF
+# 主 DNS 服务器
+nameserver 9.9.9.9
+nameserver 149.112.112.112
+# 备用 DNS 服务器
+nameserver 8.8.8.8
+nameserver 114.114.114.114
+EOF
 
-    if ! echo "nameserver 149.112.112.112" >> "$resolv_conf"; then
-        echo "错误：无法追加到 $resolv_conf" >&2
-        return 1
-    fi
-
-    echo "DNS配置已成功更新"
-    return 0
+    log "SUCCESS" "DNS 配置已完成"
 }
 
 function fix_sudo() {
-    ## 修复启动时的 sudo 和 su 权限
-    chmod +s $CHROOT/usr/bin/sudo
-    chmod +s $CHROOT/usr/bin/su
+    log "INFO" "配置 sudo 权限..."
+    
+    chmod +s "$CHROOT/usr/bin/sudo" || log "WARN" "无法设置 sudo 权限"
+    chmod +s "$CHROOT/usr/bin/su" || log "WARN" "无法设置 su 权限"
     echo "kali    ALL=(ALL:ALL) ALL" > $CHROOT/etc/sudoers.d/kali
-
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1773148
+    
+    # 修复 sudo 核心转储问题
     echo "Set disable_coredump false" > $CHROOT/etc/sudo.conf
+    
+    log "SUCCESS" "sudo 权限配置完成"
 }
 
 function fix_uid() {
-    ## 更改 kali 的用户 ID 和组 ID 以匹配 termux 用户
+    log "INFO" "修复用户 ID 映射..."
+    
     USRID=$(id -u)
     GRPID=$(id -g)
-    nh -r usermod -u "$USRID" kali 2>/dev/null
-    nh -r groupmod -g "$GRPID" kali 2>/dev/null
+    
+    # 使用 || true 防止错误中断脚本
+    nh -r usermod -u "$USRID" kali 2>/dev/null || log "WARN" "无法修改用户 ID"
+    nh -r groupmod -g "$GRPID" kali 2>/dev/null || log "WARN" "无法修改组 ID"
+    
+    log "SUCCESS" "用户 ID 映射完成"
+}
+
+function update_sources_list() {
+    log "INFO" "更新 Kali 软件源..."
+    
+    sources_list="$CHROOT/etc/apt/sources.list"
+    if [ -f "$sources_list" ]; then
+        # 备份原始文件
+        cp "$sources_list" "$sources_list.backup"
+        
+        # 替换为清华镜像源
+        sed -i 's|http://http.kali.org/kali|https://mirrors.tuna.tsinghua.edu.cn/kali|g' "$sources_list"
+        
+        log "SUCCESS" "Kali 软件源已更新为清华镜像"
+    else
+        log "WARN" "未找到 Kali sources.list 文件"
+    fi
 }
 
 function print_banner() {
     clear
-    printf "${blue}##################################################\n"
-    printf "${blue}##                                              ##\n"
-    printf "${blue}##  88      a8P         db        88        88  ##\n"
-    printf "${blue}##  88    .88'         d88b       88        88  ##\n"
-    printf "${blue}##  88   88'          d8''8b      88        88  ##\n"
-    printf "${blue}##  88 d88           d8'  '8b     88        88  ##\n"
-    printf "${blue}##  8888'88.        d8YaaaaY8b    88        88  ##\n"
-    printf "${blue}##  88P   Y8b      d8''''''''8b   88        88  ##\n"
-    printf "${blue}##  88     '88.   d8'        '8b  88        88  ##\n"
-    printf "${blue}##  88       Y8b d8'          '8b 888888888 88  ##\n"
-    printf "${blue}##                                              ##\n"
-    printf "${blue}####  ############# NetHunter ####################\n"
-    printf "${blue}####  ############ (网络猎人) ####################\n"
-    printf "${blue}脚本优化:东经雨 3.5${reset}\n"
-    printf "${yellow}技术支持:ChatGPT, Claude, DeepSeek${reset}\n\n"
+    printf "${blue}##################################################${reset}\n"
+    printf "${blue}##                                              ##${reset}\n"
+    printf "${blue}##  88      a8P         db        88        88  ##${reset}\n"
+    printf "${blue}##  88    .88'         d88b       88        88  ##${reset}\n"
+    printf "${blue}##  88   88'          d8''8b      88        88  ##${reset}\n"
+    printf "${blue}##  88 d88           d8'  '8b     88        88  ##${reset}\n"
+    printf "${blue}##  8888'88.        d8YaaaaY8b    88        88  ##${reset}\n"
+    printf "${blue}##  88P   Y8b      d8''''''''8b   88        88  ##${reset}\n"
+    printf "${blue}##  88     '88.   d8'        '8b  88        88  ##${reset}\n"
+    printf "${blue}##  88       Y8b d8'          '8b 888888888 88  ##${reset}\n"
+    printf "${blue}##                                              ##${reset}\n"
+    printf "${blue}####  ############# NetHunter ####################${reset}\n"
+    printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
+    printf "${blue}脚本优化版本: 东经雨 4.0${reset}\n"
+    printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n\n"
 }
 
+function main() {
+    # 颜色定义
+    red='\033[1;31m'
+    green='\033[1;32m'
+    yellow='\033[1;33m'
+    blue='\033[1;34m'
+    light_cyan='\033[1;96m'
+    reset='\033[0m'
+    
+    # 切换到用户主目录
+    cd "$HOME"
+    
+    # 主流程
+    print_banner
+    get_arch
+    set_strings
+    prepare_fs
+    check_dependencies
+    get_rootfs
+    verify_sha
+    extract_rootfs
+    create_launcher
+    cleanup
+    
+    log "INFO" "为 Termux 配置 NetHunter..."
+    fix_profile_bash
+    fix_resolv_conf
+    fix_sudo
+    create_kex_launcher
+    fix_uid
+    update_sources_list
+    
+    # 最终横幅和使用说明
+    print_banner
+    log "SUCCESS" "Kali NetHunter 已成功安装到 Termux"
+    
+    echo
+    printf "${green}=== 使用说明 ===${reset}\n"
+    printf "${green}[+] nethunter             # 启动 NetHunter${reset}\n"
+    printf "${green}[+] nh                    # 快速启动 NetHunter${reset}\n"
+    printf "${green}[+] exit                  # 在 NetHunter 中退出${reset}\n\n"
+    
+    printf "${green}=== KeX 图形界面 ===${reset}\n"
+    printf "${green}[+] nethunter kex passwd  # 设置 KeX 密码${reset}\n"
+    printf "${green}[+] nethunter kex &       # 启动图形界面${reset}\n"
+    printf "${green}[+] nethunter kex stop    # 停止图形界面${reset}\n"
+    printf "${green}[+] nethunter kex status  # 查看状态${reset}\n\n"
+    
+    printf "${green}=== 高级选项 ===${reset}\n"
+    printf "${green}[+] nethunter -r          # 以 root 身份启动${reset}\n"
+    printf "${green}[+] nethunter kex kill    # 强制停止所有 KeX 会话${reset}\n"
+    echo
+}
 
-##################################
-##              Main            ##
-
-# 添加一些颜色
-red='\033[1;31m'
-green='\033[1;32m'
-yellow='\033[1;33m'
-blue='\033[1;34m'
-light_cyan='\033[1;96m'
-reset='\033[0m'
-
-cd "$HOME"
-print_banner
-get_arch
-set_strings
-prepare_fs
-check_dependencies
-get_rootfs
-verify_sha
-extract_rootfs
-create_launcher
-cleanup
-
-printf "\n${blue}[*] 为 Termux 配置 NetHunter ...\n"
-fix_profile_bash
-fix_resolv_conf
-fix_sudo
-create_kex_launcher
-fix_uid
-sed -i "s@http://http.kali.org/kali@https://mirrors.tuna.tsinghua.edu.cn/kali@g" kali-${SYS_ARCH}/etc/apt/sources.list # 换清华源
-print_banner
-printf "${green}[=] Kali NetHunter 已成功安装到 Termux${reset}\n\n"
-printf "${green}[+] 要启动 Kali NetHunter,请输入:${reset}\n"
-
-printf "${green}[+] nethunter             # 启动 NetHunter${reset}\n"
-printf "${green}[+] nh                    # 快速启动 NetHunter${reset}\n"
-printf "${green}[+] exit                  # 在 Kali NetHunter 中退出${reset}\n\n"
-printf "${green}[=] 以下的 nethunter 同样可以使用 nh 来快速启动${reset}\n"
-
-printf "${green}[+] nethunter kex passwd  # 设置 KeX 密码${reset}\n"
-printf "${green}[+] nethunter kex &       # 启动 NetHunter 图形界面${reset}\n"
-printf "${green}[+] nethunter kex stop    # 停止 NetHunter 图形界面${reset}\n"
-#printf "${green}[+] nethunter kex <command> # 在 NetHunter 环境中运行命令${reset}\n"
-printf "${green}[+] nethunter -r          # 以 root 身份启动 NetHunter${reset}\n"
-#printf "${green}[+] nethunter -r kex passwd  # 为 root 设置 KeX 密码${reset}\n"
-#printf "${green}[+] nethunter kex &       # 以 root 身份启动 NetHunter 图形界面${reset}\n"
-#printf "${green}[+] nethunter kex stop    # 停止 NetHunter root 会话的图形界面${reset}\n"
-#printf "${green}[+] nethunter -r kex kill # 停止所有 NetHunter 图形界面会话${reset}\n"
-#printf "${green}[+] nethunter -r kex <command> # 以 root 身份在 NetHunter 环境中运行命令${reset}\n"
+# 脚本入口点
+main "$@"
