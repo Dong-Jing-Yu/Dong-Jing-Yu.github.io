@@ -222,11 +222,18 @@ function get_rootfs() {
     
     log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    
-    # 使用 axel 多线程下载（如果可用）
-    if command_exists axel; then
-        log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
-        axel -n 4 -a "${ROOTFS_URL}" || error_exit "下载失败"
+    if ask "是否使用多线程(axel)" "Y"; then
+        if command_exists axel; then
+            log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
+            axel -n 4 -a "${ROOTFS_URL}" || error_exit "下载失败"
+        else
+            log "WARN" "未发现axel使用wget下载: ${ROOTFS_URL}"
+            wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
+                if [[ "$line" == *%* ]]; then
+                    echo -ne "\r${blue}[下载]${reset} $line"
+                fi
+            done
+        fi
     else
         log "INFO" "使用 wget 下载: ${ROOTFS_URL}"
         wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
@@ -234,7 +241,6 @@ function get_rootfs() {
                 echo -ne "\r${blue}[下载]${reset} $line"
             fi
         done
-        echo
     fi
     
     # 验证文件是否下载成功
