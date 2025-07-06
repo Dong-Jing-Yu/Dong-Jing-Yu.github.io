@@ -272,15 +272,10 @@ function extract_rootfs() {
         log "INFO" "开始解压 rootfs..."
         
         # 显示解压进度
-        if command_exists pv; then
-            pv "$IMAGE_NAME" | proot --link2symlink tar --exclude='dev/*' -xJpf - 2>/dev/null || {
-                error_exit "解压失败，请检查镜像文件是否完整"
-            }
-        else
-            proot --link2symlink tar --exclude='dev/*' -xJpf "$IMAGE_NAME" 2>/dev/null || {
-                error_exit "解压失败，请检查镜像文件是否完整"
-            }
-        fi
+        pv "$IMAGE_NAME" | proot --link2symlink tar --exclude='dev/*' -xJf - 2>/dev/null || {
+            error_exit "解压失败，请检查镜像文件是否完整"
+        }
+
         
         log "SUCCESS" "rootfs 解压完成"
     else
@@ -296,9 +291,6 @@ function create_launcher() {
     
     cat > "$NH_LAUNCHER" <<- EOF
 #!/data/data/com.termux/files/usr/bin/bash -e
-
-# 错误处理
-set -euo pipefail
 
 cd \${HOME}
 
@@ -381,71 +373,51 @@ function create_kex_launcher() {
     cat > $KEX_LAUNCHER <<- EOF
 #!/bin/bash
 
-# KeX 启动函数
 function start-kex() {
     if [ ! -f ~/.vnc/passwd ]; then
-        echo "VNC 密码未设置，请先运行: nethunter kex passwd"
-        return 1
+        passwd-kex
     fi
-    
-    local USR=$(whoami)
-    local SCREEN
-    
-    if [ "$USR" == "root" ]; then
+    USR=\$(whoami)
+    if [ \$USR == "root" ]; then
         SCREEN=":2"
     else
         SCREEN=":1"
     fi 
-    
-    export MOZ_FAKE_NO_SANDBOX=1
-    export HOME=${HOME}
-    export USER=${USR}
-    
-    # 启动 VNC 服务器
-    if LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgcc_s.so.1 nohup vncserver "$SCREEN" >/dev/null 2>&1 </dev/null; then
-        echo "KeX 服务器已启动在显示器 $SCREEN"
-        starting_kex=1
-        return 0
-    else
-        echo "启动 KeX 服务器失败"
-        return 1
-    fi
-}
-
-function stop-kex() {
-    vncserver -kill :1 2>/dev/null | sed s/"Xtigervnc"/"NetHunter KeX"/ || true
-    vncserver -kill :2 2>/dev/null | sed s/"Xtigervnc"/"NetHunter KeX"/ || true
+    export MOZ_FAKE_NO_SANDBOX=1; export HOME=\${HOME}; export USER=\${USR}; LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgcc_s.so.1 nohup vncserver \$SCREEN >/dev/null 2>&1 </dev/null
+    starting_kex=1
     return 0
 }
 
+function stop-kex() {
+    vncserver -kill :1 | sed s/"Xtigervnc"/"NetHunter KeX"/
+    vncserver -kill :2 | sed s/"Xtigervnc"/"NetHunter KeX"/
+    return $?
+}
+
 function passwd-kex() {
-    echo "设置 VNC 密码:"
     vncpasswd
     return $?
 }
 
 function status-kex() {
-    local sessions=$(vncserver -list 2>/dev/null | sed s/"TigerVNC"/"NetHunter KeX"/)
-    if [[ $sessions == *"590"* ]]; then
-        printf "\n%s\n" "$sessions"
+    sessions=\$(vncserver -list | sed s/"TigerVNC"/"NetHunter KeX"/)
+    if [[ \$sessions == *"590"* ]]; then
+        printf "\n\${sessions}\n"
         printf "\n你可以使用 KeX 客户端连接这些显示器。\n\n"
     else
-        if [ -n "$starting_kex" ]; then
+        if [ ! -z \$starting_kex ]; then
             printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启 termux 会话并重试。\n\n'
-        else
-            printf '\n没有运行中的 KeX 会话。\n\n'
         fi
     fi
     return 0
 }
 
 function kill-kex() {
-    pkill Xtigervnc 2>/dev/null || true
-    echo "所有 KeX 会话已终止"
-    return 0
+    pkill Xtigervnc
+    return \$?
 }
 
-case "$1" in
+case \$1 in
     start)
         start-kex
         ;;
@@ -475,7 +447,7 @@ EOF
 
 function fix_profile_bash() {
     log "INFO" "修复 bash profile..."
-    if [ -f "${CHROOT}/root/.bash_profile" ]; then
+    if [ -f ${CHROOT}/root/.bash_profile ]; then
         sed -i '/if/,/fi/d' "${CHROOT}/root/.bash_profile"
     fi
 }
@@ -483,18 +455,7 @@ function fix_profile_bash() {
 function fix_resolv_conf() {
     log "INFO" "配置 DNS 解析..."
     
-    local resolv_conf="$CHROOT/etc/resolv.conf"
-    local etc_dir="${resolv_conf%/*}"
-
-    if [[ ! -d "$CHROOT" ]]; then
-        error_exit "CHROOT 目录 '$CHROOT' 不存在"
-    fi
-
-    if [[ ! -d "$etc_dir" ]]; then
-        log "INFO" "创建目录 $etc_dir"
-        mkdir -p "$etc_dir" || error_exit "无法创建目录 $etc_dir"
-    fi
-
+    resolv_conf="$CHROOT/etc/resolv.conf"
     # 配置多个 DNS 服务器以提高可靠性
     cat > "$resolv_conf" <<EOF
 # 主 DNS 服务器
@@ -523,14 +484,11 @@ function fix_sudo() {
 
 function fix_uid() {
     log "INFO" "修复用户 ID 映射..."
-    
     USRID=$(id -u)
     GRPID=$(id -g)
-    
-    # 使用 || true 防止错误中断脚本
+     # 使用 || true 防止错误中断脚本
     nh -r usermod -u "$USRID" kali 2>/dev/null || log "WARN" "无法修改用户 ID"
-    nh -r groupmod -g "$GRPID" kali 2>/dev/null || log "WARN" "无法修改组 ID"
-    
+    nh -r groupmod -g "$GRPID" kali 2>/dev/null || log "WARN" "无法修改用户 ID" 
     log "SUCCESS" "用户 ID 映射完成"
 }
 
@@ -601,7 +559,8 @@ function main() {
     create_kex_launcher
     fix_uid
     update_sources_list
-    
+    nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce
+    sleep 3
     # 最终横幅和使用说明
     print_banner
     log "SUCCESS" "Kali NetHunter 已成功安装到 Termux"
