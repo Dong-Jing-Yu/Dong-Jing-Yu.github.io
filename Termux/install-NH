@@ -13,19 +13,21 @@ declare -A SHA512_HASHES=(
     # 可以添加更多架构的哈希值
 )
 
-# 日志记录函数
 log() {
-    local level="$1"
-    shift
-    local message="$*"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
-    case "$level" in
-        "INFO")  printf "${blue}[INFO]${reset} [${timestamp}] $message\n" ;;
-        "WARN")  printf "${yellow}[WARN]${reset} [${timestamp}] $message\n" ;;
-        "ERROR") printf "${red}[ERROR]${reset} [${timestamp}] $message\n" ;;
-        "SUCCESS") printf "${green}[SUCCESS]${reset} [${timestamp}] $message\n" ;;
-        *) printf "[${timestamp}] $message\n" ;;
+    current_time=$(date +'%H:%M:%S')
+    case "$1" in
+        "INFO")
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[信息]${reset} $2"
+            ;;
+        "WARN")
+            echo -e "${yellow_bg}[$current_time]${reset} ${yellow_fg_strong}[警告]${reset} $2"
+            ;;
+        "ERROR")
+            echo -e "${red_bg}[$current_time]${reset} ${red_fg_strong}[错误]${reset} $2"
+            ;;
+        *)
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[调试]${reset} $2"
+            ;;
     esac
 }
 
@@ -38,21 +40,6 @@ error_exit() {
 # 检查命令是否存在
 command_exists() {
     command -v "$1" >/dev/null 2>&1
-}
-
-# 进度条函数
-show_progress() {
-    local current=$1
-    local total=$2
-    local width=50
-    local percentage=$((current * 100 / total))
-    local completed=$((current * width / total))
-    local remaining=$((width - completed))
-    
-    printf "\r${blue}[进度]${reset} ["
-    printf "%*s" $completed "" | tr ' ' '='
-    printf "%*s" $remaining "" | tr ' ' '-'
-    printf "] %d%%" $percentage
 }
 
 function unsupported_arch() {
