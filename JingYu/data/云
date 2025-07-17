@@ -1,0 +1,20 @@
+删件(JYPath+".云");
+void onMsg(Object msg) {
+    经雨 data = new 经雨();
+    data.解析(msg);
+    String Uin = data.Uin;
+    String Msg = data.Msg;
+    int ChatType = data.ChatType;
+    String Group = data.Group;
+    String Name = data.UserName;
+    int MsgType = data.MsgType;
+    long MsgId = data.MsgId;
+    long Time = data.Time;
+    List AtList = data.AtList;
+    Object OriginMsg = data.OriginMsg;
+    if(ChatType == 1) {
+      
+    } else {
+
+    }
+  }
