@@ -71,7 +71,12 @@ analytics:
 
 # 浏览量统计
 pageviews:
-  provider: # 当前仅支持 'goatcounter'
+  provider: goatcounter
+
+analytics:
+  goatcounter:
+    id: dongjingyu
+
 
 # 偏好配色方案
 #
