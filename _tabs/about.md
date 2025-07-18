@@ -6,7 +6,7 @@ order: 4
 
 # 关于我 🌧️
 
-你好，我是 **东经雨**。
+你好，我是**东经雨**
 
 一个对世界充满好奇心的探索者，爱折腾，爱记录，也爱把小工具分享出来。
 
@@ -22,7 +22,9 @@ order: 4
 
 ## 网站说明 ✨
 
-这个站点基于 [Jekyll](https://jekyllrb.com) + [Chirpy 主题](https://github.com/cotes2020/jekyll-theme-chirpy) 构建，部署在 GitHub Pages 上。
+- **[Jekyll](https://jekyllrb.com)**：一个静态网站生成器，用 Markdown 写博客超舒服
+- **[Chirpy 主题](https://github.com/cotes2020/jekyll-theme-chirpy)** 主题：暗黑模式、目录、PWA 支持一个不少
+- **GitHub Pages**：免费托管 + 自动部署，香！
 
 支持 Markdown 编写，支持暗色模式切换，也许未来还会添加更多功能……
 
@@ -35,4 +37,4 @@ order: 4
 
 ---
 
-> 人总是要写点什么，哪怕只是为了在时光中留下回音。
+> 人总是要写点什么，哪怕只是为了在时光中留下回音
