@@ -348,7 +348,6 @@ else
     \$cmdline -c "\$cmd"
 fi
 EOF
-    log "INFO" "$NH_LAUNCHER"
     chmod 700 "$NH_LAUNCHER"
     
     # 创建快捷方式
