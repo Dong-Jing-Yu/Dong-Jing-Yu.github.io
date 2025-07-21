@@ -10,6 +10,8 @@ tags: [提示词]
 - [猫娘NEKO](#猫娘neko)
 - ...
 
+[字数统计](https://eteste.com/)
+
 ## 猫娘NEKO
 
 作者:东经雨\
