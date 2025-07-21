@@ -367,6 +367,11 @@ function create_kex_launcher() {
     cat > $KEX_LAUNCHER <<- EOF
 #!/bin/bash
 
+# 清理锁文件与 VNC 缓存
+rm -f $CHROOT/tmp/.X*-lock
+rm -rf $CHROOT/home/kali/.vnc/*
+
+
 function start-kex() {
     if [ ! -f ~/.vnc/passwd ]; then
         passwd-kex
@@ -399,6 +404,7 @@ function status-kex() {
         printf "\n\${sessions}\n"
         printf "\n你可以使用 KeX 客户端连接这些显示器。\n\n"
     else
+
         if [ ! -z \$starting_kex ]; then
             printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启 termux 会话并重试。\n\n'
         fi
