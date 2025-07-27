@@ -549,7 +549,6 @@ function main() {
     create_kex_launcher
     fix_uid
     update_sources_list
-    nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce
     sleep 3
     # 最终横幅和使用说明
     print_banner
