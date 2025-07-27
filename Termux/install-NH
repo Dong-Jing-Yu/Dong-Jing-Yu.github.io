@@ -487,11 +487,11 @@ function update_sources_list() {
         
         # 替换为清华镜像源
         sed -i "s@http://http.kali.org/kali@https://mirrors.tuna.tsinghua.edu.cn/kali@g" "$sources_list"
+        log "SUCCESS" "Kali 软件源已更新为清华镜像"
         if [ "$wimg" = "nano" ] || [ "$wimg" = "minimal" ]; then
+            log "INFO" "当前非完整版,正在安装kex服务"
             nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce
         fi
-
-        log "SUCCESS" "Kali 软件源已更新为清华镜像"
     else
         log "WARN" "未找到 Kali sources.list 文件"
     fi
