@@ -488,7 +488,7 @@ function update_sources_list() {
         # 替换为清华镜像源
         sed -i "s@http://http.kali.org/kali@https://mirrors.tuna.tsinghua.edu.cn/kali@g" "$sources_list"
         if [ "$wimg" = "nano" ] || [ "$wimg" = "minimal" ]; then
-            nh sudo apt update && nh sudo apt install -y tightvncserver kali-desktop-xfce
+            nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce
         fi
 
         log "SUCCESS" "Kali 软件源已更新为清华镜像"
