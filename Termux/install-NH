@@ -513,9 +513,9 @@ function print_banner() {
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
     printf "${blue}脚本优化: 东经雨 5.0${reset}\n"
-    printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n\n"
-    printf "使用则代表同意协议:"
-    printf "作者已经脚本参与者不承担因脚本引发的任何法律问题,均由使用者自行承担"
+    printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n"
+    printf "使用则代表同意协议:\n"
+    printf "作者已经脚本参与者不承担因脚本引发的任何法律问题,均由使用者自行承担\n\n"
 }
 
 function main() {
