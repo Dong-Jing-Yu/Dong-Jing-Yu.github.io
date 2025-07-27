@@ -1,17 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/bash -e
 
-VERSION=2024091801
+VERSION=20250525
 BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
 # https://gitlab.com/kalilinux/nethunter/build-scripts/kali-nethunter-rootless/raw/main/install-nethunter-termux 原版连链接
-
-# SHA512 哈希值
-declare -A SHA512_HASHES=(
-    ["full_arm64"]="1fe0305803dbac57111e04cbc36b1e2d7365a293171474b83616c9df91cf89a05d1d0313488974f3cd2c8131e5ecdc25d5230091743c458bbac41ca109d8b12f"
-    ["minimal_arm64"]="061502bb2c28b4f1202eebea70d3bbe2f5c61e9f43fa7ab16080dbcfdf41f9363b2a00e29598502cdc8f5d15f7b116e336f043b1924aaabc4b08841f281601f8"
-    ["nano_arm64"]="6a244b108aec3d612e50e03d9af4c503ce636f7d5bb752f0f7a893a21e5384657da4579cfb1a8ef6902914e6f46d4720c6f385c00a5bc950803c7f5d141133db"
-    # 可以添加更多架构的哈希值
-)
 
 log() {
     current_time=$(date +'%H:%M:%S')
@@ -47,7 +39,9 @@ function unsupported_arch() {
 }
 
 function ask() {
+    # http://djm.me/ask
     while true; do
+
         if [ "${2:-}" = "Y" ]; then
             prompt="Y/n"
             default=Y
@@ -59,28 +53,28 @@ function ask() {
             default=
         fi
 
-        printf "${light_cyan}[?] "
+        # Ask the question
+        printf "${light_cyan}\n[?] "
         read -p "$1 [$prompt] " REPLY
 
+        # Default?
         if [ -z "$REPLY" ]; then
             REPLY=$default
         fi
 
         printf "${reset}"
 
+        # Check if the reply is valid
         case "$REPLY" in
             Y*|y*) return 0 ;;
             N*|n*) return 1 ;;
-            *) log "WARN" "请输入 y 或 n" ;;
         esac
     done
 }
 
 function get_arch() {
     log "INFO" "检查设备架构..."
-    
-    local cpu_abi=$(getprop ro.product.cpu.abi)
-    case "$cpu_abi" in
+    case $(getprop ro.product.cpu.abi) in
         arm64-v8a)
             SYS_ARCH=arm64
             log "INFO" "检测到架构: ARM64"
@@ -101,10 +95,10 @@ function set_strings() {
     
     if [[ ${SYS_ARCH} == "arm64" ]]; then
         menu_options=("full" "minimal" "nano")
-        descriptions=("NetHunter ARM64 (完整版 - 包含所有工具)" "NetHunter ARM64 (精简版 - 基本工具)" "NetHunter ARM64 (纳米版 - 最小安装)")
+        descriptions=("NetHunter ARM64 (完整版 - 2.1 GiB)" "NetHunter ARM64 (精简版 - 131.6 MiB)" "NetHunter ARM64 (纳米版 - 185.2 MiB)")
     elif [[ ${SYS_ARCH} == "armhf" ]]; then
         menu_options=("full" "minimal" "nano")
-        descriptions=("NetHunter ARMhf (完整版 - 包含所有工具)" "NetHunter ARMhf (精简版 - 基本工具)" "NetHunter ARMhf (纳米版 - 最小安装)")
+        descriptions=("NetHunter ARMhf (完整版 - 2.0 GiB)" "NetHunter ARMhf (精简版 - 122.2 MiB)" "NetHunter ARMhf (纳米版 - 174.2 MiB)")
     fi
     
     echo
@@ -240,25 +234,24 @@ function get_rootfs() {
 }
 
 function verify_sha() {
-    log "INFO" "验证 rootfs 完整性..."
-    
-    local hash_key="${wimg}_${SYS_ARCH}"
-    local expected_hash="${SHA512_HASHES[$hash_key]}"
-    
-    if [ -z "$expected_hash" ]; then
-        log "WARN" "未找到 $hash_key 的预期哈希值，跳过验证"
-        return 0
-    fi
-    
-    log "INFO" "计算 SHA-512 哈希值..."
-    local actual_hash=$(sha512sum "$IMAGE_NAME" | awk '{print $1}')
-    
-    if [ "$expected_hash" = "$actual_hash" ]; then
-        log "SUCCESS" "Rootfs SHA-512 哈希验证通过"
-        return 0
+    log "INFO" "开始下载rootfs验证文件..."
+    wget -c "${BASE_URL}/SHA256SUMS"
+    if [ -f "SHA256SUMS"]; then
+        # 从SHA256SUMS中提取该文件的哈希值
+        EXPECTED_HASH=$(grep "$IMAGE_NAME" SHA256SUMS | awk '{print $1}')
+        # 计算实际哈希值
+        log "INFO" "计算 SHA-512 哈希值..."
+        ACTUAL_HASH=$(sha256sum "$IMAGE_NAME" | awk '{print $1}')
+        if [ "$EXPECTED_HASH" = "$ACTUAL_HASH" ]; then
+            log "SUCCESS" "Rootfs SHA-256 哈希验证通过"
+            return 0
+        else
+            rm -f "$IMAGE_NAME"
+            error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
+        fi
     else
-        rm -f "$IMAGE_NAME"
-        error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
+        log "WARN" "未找到验证文件,跳过验证"
+        return 0
     fi
 }
 
@@ -267,7 +260,7 @@ function extract_rootfs() {
         log "INFO" "开始解压 rootfs..."
         
         # 显示解压进度
-        pv "$IMAGE_NAME" | proot --link2symlink tar --exclude='dev/*' -xJf - 2>/dev/null || {
+        pv "$IMAGE_NAME" | proot --link2symlink tar -xf - 2>/dev/null || {
             error_exit "解压失败，请检查镜像文件是否完整"
         }
 
@@ -286,17 +279,9 @@ function create_launcher() {
     
     cat > "$NH_LAUNCHER" <<- EOF
 #!/data/data/com.termux/files/usr/bin/bash -e
-
 cd \${HOME}
-
 # 取消设置 termux-exec 的 LD_PRELOAD
 unset LD_PRELOAD
-
-# 检查 rootfs 是否存在
-if [ ! -d "kali-arm64" ]; then
-    echo "错误: kali-arm64 目录不存在，请先运行安装脚本"
-    exit 1
-fi
 
 # Libreoffice 的临时解决方案
 if [ ! -f $CHROOT/root/.version ]; then
@@ -502,6 +487,10 @@ function update_sources_list() {
         
         # 替换为清华镜像源
         sed -i "s@http://http.kali.org/kali@https://mirrors.tuna.tsinghua.edu.cn/kali@g" "$sources_list"
+        if [ "$wimg" = "nano" ] || [ "$wimg" = "minimal" ]; then
+            nh sudo apt update && nh sudo apt install -y tightvncserver kali-desktop-xfce
+        fi
+
         log "SUCCESS" "Kali 软件源已更新为清华镜像"
     else
         log "WARN" "未找到 Kali sources.list 文件"
