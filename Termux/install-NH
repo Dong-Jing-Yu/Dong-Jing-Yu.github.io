@@ -164,7 +164,7 @@ function check_dependencies() {
     log "INFO" "更新包索引..."
     apt update -y &>/dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &>/dev/null
 
-    local required_packages=("proot" "tar" "axel" "wget" "pv")
+    local required_packages=("proot" "tar" "aria2" "wget" "pv")
     local missing_packages=()
     
     # 检查缺失的包
@@ -203,10 +203,10 @@ function get_rootfs() {
     
     log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    if ask "是否使用多线程(axel)" "Y"; then
-        if command_exists axel; then
-            log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
-            axel -n 4 -a "${ROOTFS_URL}" || error_exit "下载失败"
+    if ask "是否使用多线程(aria2)" "Y"; then
+        if command_exists aria2; then
+            log "INFO" "使用 aria2 多线程下载: ${ROOTFS_URL}"
+            aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}" || error_exit "下载失败"
         else
             log "WARN" "未发现axel使用wget下载: ${ROOTFS_URL}"
             wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
@@ -234,33 +234,51 @@ function get_rootfs() {
 }
 
 function verify_sha() {
-    log "INFO" "开始下载rootfs验证文件..."
-    wget -c "${BASE_URL}/SHA256SUMS"
-    if [ -f "SHA256SUMS"]; then
-        # 从SHA256SUMS中提取该文件的哈希值
-        EXPECTED_HASH=$(grep "$IMAGE_NAME" SHA256SUMS | awk '{print $1}')
-        # 计算实际哈希值
-        log "INFO" "计算 SHA-512 哈希值..."
+    log "INFO" "开始下载 rootfs 验证文件..."
+    wget -q -c "${BASE_URL}/SHA256SUMS" -O SHA256SUMS
+
+    if [ -f "SHA256SUMS" ]; then
+        FILE_NAME=$(basename "$IMAGE_NAME")
+        log "INFO" "提取文件名: $FILE_NAME"
+
+        # 构造匹配模式（移除日期）
+        # 例如：kali-nethunter-rootfs-minimal-arm64.tar.xz → kali-nethunter-*-rootfs-minimal-arm64.tar.xz
+        MATCH_PATTERN=$(echo "$FILE_NAME" | sed 's/kali-nethunter-/kali-nethunter-[0-9.]*-/')
+
+        # 提取哈希值（用 grep 正则匹配）
+        EXPECTED_HASH=$(grep -E " ${MATCH_PATTERN}$" SHA256SUMS | awk '{print $1}')
+
+        if [ -z "$EXPECTED_HASH" ]; then
+            error_exit "无法从 SHA256SUMS 中找到对应的哈希值 (模式: $MATCH_PATTERN)"
+        fi
+
+        log "INFO" "计算 SHA-256 哈希值..."
         ACTUAL_HASH=$(sha256sum "$IMAGE_NAME" | awk '{print $1}')
+
+        printf "预期: %s\n" "$EXPECTED_HASH"
+        printf "真实: %s\n" "$ACTUAL_HASH"
+
         if [ "$EXPECTED_HASH" = "$ACTUAL_HASH" ]; then
             log "SUCCESS" "Rootfs SHA-256 哈希验证通过"
             return 0
         else
-            rm -f "$IMAGE_NAME"
             error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
         fi
     else
-        log "WARN" "未找到验证文件,跳过验证"
+        log "WARN" "未找到验证文件，跳过验证"
         return 0
     fi
 }
+
+
 
 function extract_rootfs() {
     if [ -z "$KEEP_CHROOT" ]; then
         log "INFO" "开始解压 rootfs..."
         
         # 显示解压进度
-        pv "$IMAGE_NAME" | proot --link2symlink tar -xf - 2>/dev/null || {
+        pv "$IMAGE_NAME" | proot --link2symlink tar -xJf - \
+            --no-same-owner --no-same-permissions --exclude='dev/*' || {
             error_exit "解压失败，请检查镜像文件是否完整"
         }
 
@@ -352,12 +370,9 @@ function create_kex_launcher() {
     cat > $KEX_LAUNCHER <<- EOF
 #!/bin/bash
 
-# 清理锁文件与 VNC 缓存
-rm -f $CHROOT/tmp/.X*-lock
-rm -rf $CHROOT/home/kali/.vnc/*
-
-
 function start-kex() {
+    export FONTCONFIG_PATH=/etc/fonts
+    export FONTCONFIG_FILE=/etc/fonts/fonts.conf
     if [ ! -f ~/.vnc/passwd ]; then
         passwd-kex
     fi
@@ -373,6 +388,8 @@ function start-kex() {
 }
 
 function stop-kex() {
+    rm -f /tmp/.X*-lock
+    rm -f /tmp/.X11-unix/X*
     vncserver -kill :1 | sed s/"Xtigervnc"/"NetHunter KeX"/
     vncserver -kill :2 | sed s/"Xtigervnc"/"NetHunter KeX"/
     return $?
@@ -490,7 +507,7 @@ function update_sources_list() {
         log "SUCCESS" "Kali 软件源已更新为清华镜像"
         if [ "$wimg" = "nano" ] || [ "$wimg" = "minimal" ]; then
             log "INFO" "当前非完整版,正在安装kex服务"
-            nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce
+            nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce tigervnc-standalone-server x11-utils x11-xserver-utils xfonts-base
         fi
     else
         log "WARN" "未找到 Kali sources.list 文件"
@@ -512,7 +529,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 5.0${reset}\n"
+    printf "${blue}脚本优化: 东经雨 5.8${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "作者已经脚本参与者不承担因脚本引发的任何法律问题,均由使用者自行承担\n\n"
