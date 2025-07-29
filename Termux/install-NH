@@ -208,7 +208,7 @@ function get_rootfs() {
             log "INFO" "使用 aria2 多线程下载: ${ROOTFS_URL}"
             aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}" || error_exit "下载失败"
         else
-            log "WARN" "未发现axel使用wget下载: ${ROOTFS_URL}"
+            log "WARN" "未发现aria2使用wget下载: ${ROOTFS_URL}"
             wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
                 if [[ "$line" == *%* ]]; then
                     echo -ne "\r${blue}[下载]${reset} $line"
