@@ -203,12 +203,12 @@ function get_rootfs() {
     
     log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    if ask "是否使用多线程(aria2)" "Y"; then
-        if command_exists aria2; then
-            log "INFO" "使用 aria2 多线程下载: ${ROOTFS_URL}"
+    if ask "是否使用多线程(aria2c)" "Y"; then
+        if command_exists aria2c; then
+            log "INFO" "使用 aria2c 多线程下载: ${ROOTFS_URL}"
             aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}" || error_exit "下载失败"
         else
-            log "WARN" "未发现aria2使用wget下载: ${ROOTFS_URL}"
+            log "WARN" "未发现aria2c使用wget下载: ${ROOTFS_URL}"
             wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
                 if [[ "$line" == *%* ]]; then
                     echo -ne "\r${blue}[下载]${reset} $line"
@@ -529,7 +529,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 5.8${reset}\n"
+    printf "${blue}脚本优化: 东经雨 5.9${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "作者已经脚本参与者不承担因脚本引发的任何法律问题,均由使用者自行承担\n\n"
