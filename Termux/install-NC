@@ -1,0 +1,75 @@
+#!/data/data/com.termux/files/usr/bin/bash -e
+
+# 前景色（普通）
+red='\033[1;31m'
+green='\033[1;32m'
+yellow='\033[1;33m'
+blue='\033[1;34m'
+light_cyan='\033[1;96m'
+
+# 前景色（更亮/加粗）
+red_fg_strong='\033[1;91m'
+green_fg_strong='\033[1;92m'
+yellow_fg_strong='\033[1;93m'
+blue_fg_strong='\033[1;94m'
+
+# 背景色
+red_bg='\033[41m'
+green_bg='\033[42m'
+yellow_bg='\033[43m'
+blue_bg='\033[44m'
+light_cyan_bg='\033[106m'
+
+# 复位
+reset='\033[0m'
+
+
+log() {
+    current_time=$(date +'%H:%M:%S')
+    case "$1" in
+        "INFO")
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[信息]${reset} $2"
+            ;;
+        "WARN")
+            echo -e "${yellow_bg}[$current_time]${reset} ${yellow_fg_strong}[警告]${reset} $2"
+            ;;
+        "ERROR")
+            echo -e "${red_bg}[$current_time]${reset} ${red_fg_strong}[错误]${reset} $2"
+            ;;
+        *)
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[调试]${reset} $2"
+            ;;
+    esac
+}
+    
+# 更新源到清华镜像
+if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
+    log "INFO" "更新软件源到清华镜像..."
+    cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
+    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' "$PREFIX/etc/apt/sources.list"
+
+fi
+
+for cmd in screen proot-distro; do
+    command -v "$cmd" >/dev/null 2>&1 || pkg install -y "$cmd"
+done
+log "INFO" "安装debian容器..."
+proot-distro install debian --override-alias NC --tarball-url 
+log "INFO" "安装完成!"
+mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
+
+cmdline="proot \\
+        --link2symlink \\
+        -0 \\
+        -r $CHROOT \\
+        -b /dev \\
+        -b /proc \\
+        -b /sdcard \\
+        -b $CHROOT\$home:/dev/shm \\
+        -w \$home \\
+           /usr/bin/env -i \\
+           HOME=\$home \\
+           PATH=/usr/local/sbin:/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin \\
+           TERM=\$TERM \\
+           LANG=C.UTF-8 \\
+           \$start"
