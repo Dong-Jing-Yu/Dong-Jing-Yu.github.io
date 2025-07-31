@@ -63,7 +63,7 @@ mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
 
 init_cmd="apt update -y && apt upgrade -y && \
 apt install -y sudo curl && \
-curl -O https://gitee.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/raw/main/Termux/napcat.sh && \
+curl -O https://gitee.com/Dong-Jing-Yu/Dong-Jing-Yu.gitee.io/raw/main/Termux/napcat.sh && \
 sudo bash napcat.sh --docker n --cli n && \
 apt autoremove -y && \
 apt clean && \
