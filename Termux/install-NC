@@ -54,10 +54,13 @@ fi
 for cmd in screen proot-distro; do
     command -v "$cmd" >/dev/null 2>&1 || pkg install -y "$cmd"
 done
-log "INFO" "安装debian容器..."
-export PD_OVERRIDE_TARBALL_URL="https://gitee.com/Dong-Jing-Yu/Dong-Jing-Yu.gitee.io/raw/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
-proot-distro install debian --override-alias nc
-log "INFO" "安装完成!"
+
+if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
+    log "INFO" "安装debian容器..."
+    export PD_OVERRIDE_TARBALL_URL="https://gitee.com/Dong-Jing-Yu/Dong-Jing-Yu.gitee.io/raw/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
+    proot-distro install debian --override-alias nc
+    log "INFO" "安装完成!"
+if
 mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
 
 
