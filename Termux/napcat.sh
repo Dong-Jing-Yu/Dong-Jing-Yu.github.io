@@ -139,7 +139,7 @@ function network_test() {
     local status=0
     target_proxy=""
 
-    local current_proxy_setting="${proxy_num_arg:-9}"
+    local current_proxy_setting="${proxy_num_arg:-10}"
 
     log "开始网络测试: ${parm1}..."
     # 观察实际使用的代理设置
