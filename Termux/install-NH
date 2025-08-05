@@ -164,7 +164,7 @@ function check_dependencies() {
     log "INFO" "更新包索引..."
     apt update -y &>/dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &>/dev/null
 
-    local required_packages=("proot" "tar" "aria2" "wget" "pv")
+    local required_packages=("proot" "tar" "wget" "xz")
     local missing_packages=()
     
     # 检查缺失的包
@@ -175,7 +175,12 @@ function check_dependencies() {
             log "INFO" "$package 已就绪"
         fi
     done
-    
+    # 单独检查 aria2
+    if ! command_exists "aria2c"; then
+        missing_packages+=("aria2")
+    else
+        log "INFO" "aria2 已就绪"
+    fi
     # 安装缺失的包
     if [ ${#missing_packages[@]} -gt 0 ]; then
         log "INFO" "安装缺失的包: ${missing_packages[*]}"
@@ -275,14 +280,13 @@ function verify_sha() {
 function extract_rootfs() {
     if [ -z "$KEEP_CHROOT" ]; then
         log "INFO" "开始解压 rootfs..."
-        
-        # 显示解压进度
-        pv "$IMAGE_NAME" | proot --link2symlink tar -xJf - \
+
+        # 使用 xz 解压并显示进度，替代 pv
+        xz -dc --verbose "$IMAGE_NAME" | proot --link2symlink tar -xf - \
             --no-same-owner --no-same-permissions --exclude='dev/*' || {
             error_exit "解压失败，请检查镜像文件是否完整"
         }
 
-        
         log "SUCCESS" "rootfs 解压完成"
     else
         log "INFO" "使用现有的 rootfs 目录"
@@ -529,7 +533,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 5.9${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.0${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "作者已经脚本参与者不承担因脚本引发的任何法律问题,均由使用者自行承担\n\n"
