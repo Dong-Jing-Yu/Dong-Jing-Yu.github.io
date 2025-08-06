@@ -42,7 +42,12 @@ log() {
             ;;
     esac
 }
-    
+
+# 检查命令是否存在
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 # 更新源到清华镜像
 if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
     log "INFO" "更新软件源到清华镜像..."
@@ -52,12 +57,12 @@ if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
 fi
 
 for cmd in screen proot-distro; do
-    command -v "$cmd" >/dev/null 2>&1 || pkg install -y "$cmd"
+    command_exists "$cmd" || pkg install -y "$cmd"
 done
 
 if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
     log "INFO" "安装debian容器..."
-    export PD_OVERRIDE_TARBALL_URL="https://raw.githubusercontent.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/refs/heads/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
+    export PD_OVERRIDE_TARBALL_URL="https://gh-proxy.com/https://raw.githubusercontent.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/refs/heads/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
     proot-distro install debian --override-alias nc
     log "INFO" "安装完成!"
 fi
