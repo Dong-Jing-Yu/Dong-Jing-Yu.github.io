@@ -57,7 +57,7 @@ done
 
 if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
     log "INFO" "安装debian容器..."
-    export PD_OVERRIDE_TARBALL_URL="https://gitee.com/Dong-Jing-Yu/Dong-Jing-Yu.gitee.io/raw/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
+    export PD_OVERRIDE_TARBALL_URL="https://raw.githubusercontent.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/refs/heads/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
     proot-distro install debian --override-alias nc
     log "INFO" "安装完成!"
 fi
