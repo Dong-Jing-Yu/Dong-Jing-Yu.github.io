@@ -1,5 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash -e
 
+echo -e "\033]0;NapCat安装\007"
+
 # 前景色（普通）
 red='\033[1;31m'
 magenta='\033[0;1;35;95m'
@@ -61,10 +63,10 @@ done
 if [ -f "$PREFIX/etc/apt/sources.list.bak" ]; then
     mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
 fi
-if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
+if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/napcat/" ]; then
     log "INFO" "安装debian容器..."
     export PD_OVERRIDE_TARBALL_URL="https://gh-proxy.com/https://raw.githubusercontent.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/refs/heads/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
-    proot-distro install debian --override-alias nc
+    proot-distro install debian --override-alias napcat
     log "INFO" "安装完成!"
 fi
 
@@ -77,10 +79,10 @@ sudo bash install.sh --docker n --cli n --proxy 10 && \
 apt autoremove -y && \
 apt clean && \
 rm -rf /tmp/* /var/lib/apt/lists"
-proot-distro sh nc -- bash -c "$init_cmd"
+proot-distro sh napcat -- bash -c "$init_cmd"
 
 echo -e "${red}napcat容器安装成功,但请注意在运行上述指令时请加上⬇${reset}\n"
-echo -e "${green}proot-distro sh nc -- bash -c "[指令]"${reset}\n"
-echo -e "保持后台可以使用 ${green}screen -dmS nc bash -c 'proot-distro sh nc -- bash -c "[指令]"'${reset}\n\n"
-echo -e "进入容器: ${green}proot-distro login nc${reset}\n"
-echo -e "启动: ${green}proot-distro sh nc -- bash -c \"xvfb-run -a qq --no-sandbox\"${reset}\n"
+echo -e "${green}proot-distro sh napcat -- bash -c "[指令]"${reset}\n"
+echo -e "保持后台可以使用 ${green}screen -dmS napcat bash -c 'proot-distro sh napcat -- bash -c "[指令]"'${reset}\n\n"
+echo -e "进入容器: ${green}proot-distro login napcat${reset}\n"
+echo -e "启动: ${green}proot-distro sh napcat -- bash -c \"xvfb-run -a qq --no-sandbox\"${reset}\n"
