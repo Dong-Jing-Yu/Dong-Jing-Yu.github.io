@@ -58,9 +58,9 @@ fi
 for cmd in screen proot-distro; do
     command_exists "$cmd" || pkg install -y "$cmd"
 done
-
-mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
-
+if [ -f "$PREFIX/etc/apt/sources.list.bak" ]; then
+    mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
+fi
 if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
     log "INFO" "安装debian容器..."
     export PD_OVERRIDE_TARBALL_URL="https://gh-proxy.com/https://raw.githubusercontent.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/refs/heads/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
