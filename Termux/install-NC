@@ -53,7 +53,6 @@ if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
     log "INFO" "更新软件源到清华镜像..."
     cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
     sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' "$PREFIX/etc/apt/sources.list"
-
 fi
 
 for cmd in screen proot-distro; do
@@ -66,7 +65,7 @@ if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
     proot-distro install debian --override-alias nc
     log "INFO" "安装完成!"
 fi
-mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
+# mv "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
 
 
 init_cmd="apt update -y && \
