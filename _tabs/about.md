@@ -37,5 +37,5 @@ order: 4
 
 > 人总是要写点什么，哪怕只是为了在时光中留下回音
 
-![Web_QR](..\assets\img\Web_QR.png){: w="370" h="370" }
+![Web_QR](/assets/img/Web_QR.png){: w="370" h="370" }
 网站二维码
