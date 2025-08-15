@@ -5,5 +5,20 @@ DJY:
 
 XiaoXiao:
   name: 怡境梦呓
-  twitter: 
-  url: 
+  url: https://github.com/Yi-jing-meng-yi/
+
+GPT:
+  name: ChatGPT
+  url: https://chatgpt.com
+
+Gemini:
+  name: Google Gemini
+  url: https://gemini.google.com
+  
+Claude:
+  name: Claude
+  url: https://claude.ai
+
+DeepSeek:
+  name: DeepSeek
+  url: https://chat.deepseek.com
