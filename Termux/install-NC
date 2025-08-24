@@ -73,13 +73,13 @@ fi
 init_cmd="apt update -y && \
 apt install -y sudo curl && \
 curl -O https://gh-proxy.com/https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
-sudo bash napcat.sh --docker n --cli n --proxy 3 && \
+sudo bash install.sh --docker n --cli n --proxy 3 && \
 apt autoremove -y && \
 apt clean && \
 rm -rf /tmp/* /var/lib/apt/lists"
 proot-distro sh nc -- bash -c "$init_cmd"
 
-echo -e "${red}napcat容器安装成功,但请注意在运行上述指令时请加上⬇${reset}\n"
+echo -e "${red}NapCat容器安装成功,但请注意在运行上述指令时请加上⬇${reset}\n"
 echo -e "${green}proot-distro sh nc -- bash -c "[指令]"${reset}\n"
 echo -e "保持后台可以使用 ${green}screen -dmS nc bash -c 'proot-distro sh nc -- bash -c "[指令]"'${reset}\n\n"
 echo -e "进入容器: ${green}proot-distro login nc${reset}\n"
