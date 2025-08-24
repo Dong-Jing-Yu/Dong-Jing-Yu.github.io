@@ -51,8 +51,8 @@ command_exists() {
 # 更新源到清华镜像
 if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
     log "INFO" "更新软件源到清华镜像..."
-    cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
-    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' "$PREFIX/etc/apt/sources.list"
+    cp -a $PREFIX/etc/apt/sources.list $PREFIX/etc/apt/sources.list.bak
+    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
 fi
 
 for cmd in screen proot-distro; do
