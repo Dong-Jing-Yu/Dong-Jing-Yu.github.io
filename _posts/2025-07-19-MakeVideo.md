@@ -9,6 +9,6 @@ categories: [计划,视频制作]
   - [x] Kali Nethunter (2025-03-02 -> 2025-07-10)
 {% include embed/bilibili.html id='BV1NB9tYFEVE' %}
 
-  - [ ] Tmoe (2025-07-21 -> ...)
+  - [ ] Tmoe (2025-07-21 -> 快了快了...)
 
   - [ ] Sillytavern (... -> ...)
