@@ -5,6 +5,8 @@ BASE_URL=https://kali.download/nethunter-images/current/rootfs
 USERNAME=kali
 # https://gitlab.com/kalilinux/nethunter/build-scripts/kali-nethunter-rootless/raw/main/install-nethunter-termux 原版连链接
 
+# sed -i 's/\r$//' install-NH
+
 log() {
     current_time=$(date +'%H:%M:%S')
     case "$1" in
@@ -378,6 +380,7 @@ function create_kex_launcher() {
 #!/bin/bash
 
 function start-kex() {
+    export LANG=zh_CN.UTF-8
     export FONTCONFIG_PATH=/etc/fonts
     export FONTCONFIG_FILE=/etc/fonts/fonts.conf
     if [ ! -f ~/.vnc/passwd ]; then
@@ -536,10 +539,10 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.1${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.2${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
-    printf "作者已经脚本参与者不承担因脚本引发的任何法律问题,均由使用者自行承担\n\n"
+    printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
 }
 
 function main() {
