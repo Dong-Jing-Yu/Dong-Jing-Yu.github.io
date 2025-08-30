@@ -9,7 +9,7 @@ categories: [计划,视频制作]
   - [x] Kali Nethunter (2025-03-02 -> 2025-07-10)
 {% include embed/bilibili.html id='BV1NB9tYFEVE' %}
 
-  - [ ] Tmoe (2025-07-21 -> 2025-08-30)
+  - [x] Tmoe (2025-07-21 -> 2025-08-30)
 {% include embed/bilibili.html id='BV1fChvzZEXi' %}
 
   - [ ] Sillytavern (... -> ...)
