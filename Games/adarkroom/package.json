@@ -1,0 +1,9 @@
+{
+  "name": "小黑屋",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "repository": "git@github.com:doublespeakgames/adarkroom.git",
+  "author": "Michael Townsend <michael@doublespeakgames.com>",
+  "license": "MPL-2.0"
+}
