@@ -3,7 +3,6 @@ title: "暂无"
 date: 2025-01-01 00:00:00 +0800
 categories: [本地]
 pin: true
-media_subpath: /
 ---
 
 ## 其他
@@ -12,7 +11,7 @@ media_subpath: /
 
 性能测试
 
-[进入](other/DMG.html)
+[进入](/other/DMG.html)
 
 ## 游戏 (Games)
 
@@ -20,4 +19,4 @@ media_subpath: /
 
 > "醒了. 头隐隐作痛. 眼前一片模糊. 生起火来吧."
 
-[进入](Games/adarkroom/index.html)
+[进入](/Games/adarkroom/index.html)
