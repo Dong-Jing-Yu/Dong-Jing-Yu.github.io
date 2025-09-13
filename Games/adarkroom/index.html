@@ -33,12 +33,7 @@
 	<link rel="stylesheet" href="css/fabricator.css">
 	
 	<!-- jQuery 核心库 -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-	<script>
-		if(!window.jQuery) {
-			document.write('<script src="lib/jquery.min.js"><\/script>');
-		}
-	</script>
+	<script src="lib/jquery.min.js"></script>
 	
 	<!-- jQuery 插件 -->
 	<script src="lib/jquery.color-2.1.2.min.js"></script>
@@ -52,21 +47,8 @@
 	
 	<!-- 语言设置 -->
 	<script>
-		// 从 URL 读取 "lang" 参数 (现代方法)
-		var lang = new URLSearchParams(window.location.search).get('lang');
-		
-		// 如果没有指定语言,尝试从本地存储读取
-		if(!lang){
-			try {
-				lang = localStorage.getItem('lang');
-			} catch(e) {}
-		}
-		
-		// 如果请求了非英语的语言,则加载对应翻译
-		if(lang && lang !== 'en'){
-			document.write('<script src="lang/'+lang+'/strings.js"><\/script>');
-			document.write('<link rel="stylesheet" href="lang/'+lang+'/main.css">');
-		}
+		document.write('<script src="lang/zh_cn/strings.js"><\/script>');
+		document.write('<link rel="stylesheet" href="lang/zh_cn/main.css">');
 	</script>
 	
 	<!-- 游戏核心脚本 -->

@@ -86,12 +86,12 @@
       this._debug = this.options.debug;
       this._log = this.options.log;
 
-      // Check for HTML5 support
+      // 检查是否支持 HTML5
       if(!Engine.browserValid()) {
         window.location = 'browserWarning.html';
       }
 
-      // Check for mobile
+      // 检查是否是 手机
       if(Engine.isMobile()) {
         window.location = 'mobileWarning.html';
       }
