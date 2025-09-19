@@ -816,7 +816,7 @@
       }
     },
 
-    toggleVolume: function(enabled /* optional */) {
+    toggleVolume: function(enabled /* 可选 */) {
       if (enabled == null) {
         enabled = !$SM.get('config.soundOn');
       }

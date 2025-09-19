@@ -1,17 +1,16 @@
 /*
- * Module for handling States
+ * 状态处理模块
  *
- * All states should be get and set through the StateManager ($SM).
+ * 所有状态都应通过 StateManager ($SM) 获取和设置。
  *
- * The manager is intended to handle all needed checks and error catching.
- * This includes creating the parents of layered/deep states so undefined states
- * do not need to be tested for and created beforehand.
+ * 该管理器用于处理所有必要的检查和错误捕捉。
+ * 包括为多层/深层状态创建父级，这样就不需要提前测试和创建未定义的状态。
  *
- * When a state is changed, an update event is sent out containing the name of the state
- * changed or in the case of multiple changes (.setM, .addM) the parent class changed.
- * Event: type: 'stateUpdate', stateName: <path of state or parent state>
+ * 当状态被更改时，会发送一个更新事件，其中包含被更改状态的名称；
+ * 如果是多个更改（.setM, .addM），则包含被更改的父类。
+ * 事件： type: 'stateUpdate', stateName: <状态或父状态的路径>
  *
- * Original file created by: Michael Galusha
+ * 原始文件作者: Michael Galusha
  */
 
 var StateManager = {

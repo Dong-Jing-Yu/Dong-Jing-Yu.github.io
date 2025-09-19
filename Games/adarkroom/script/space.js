@@ -1,5 +1,5 @@
 /**
- * Module that registers spaaaaaaaaace!
+ * 注册「太～～空!」的模块
  */
 var Space = {	
 	SHIP_SPEED: 3,

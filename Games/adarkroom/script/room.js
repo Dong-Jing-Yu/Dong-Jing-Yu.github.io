@@ -1,13 +1,13 @@
 /**
- * Module that registers the simple room functionality
+ * 注册简易房间功能的模块
  */
 var Room = {
-	// times in (minutes * seconds * milliseconds)
-	_FIRE_COOL_DELAY: 5 * 60 * 1000, // time after a stoke before the fire cools
-	_ROOM_WARM_DELAY: 30 * 1000, // time between room temperature updates
-	_BUILDER_STATE_DELAY: 0.5 * 60 * 1000, // time between builder state updates
-	_STOKE_COOLDOWN: 10, // cooldown to stoke the fire
-	_NEED_WOOD_DELAY: 15 * 1000, // from when the stranger shows up, to when you need wood
+	// 时间单位 (分钟 * 秒 * 毫秒)
+	_FIRE_COOL_DELAY: 5 * 60 * 1000, // 篝火被添柴后，冷却所需的时间
+	_ROOM_WARM_DELAY: 30 * 1000, // 房间温度更新的间隔时间
+	_BUILDER_STATE_DELAY: 0.5 * 60 * 1000, // 建造者状态更新的间隔时间
+	_STOKE_COOLDOWN: 10, // 给篝火添柴的冷却时间
+	_NEED_WOOD_DELAY: 15 * 1000, // 从陌生人出现，到需要木材的间隔
 	buttons: {},
 	Craftables: {
 		'trap': {
