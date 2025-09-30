@@ -1,0 +1,121 @@
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background-color: #0078d7;
+    color: white;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+.board-container {
+    position: relative;
+}
+
+.board {
+    position: relative;
+    width: 300px;     /* 6:3比例 */
+    height: 600px;
+    background: linear-gradient(to bottom, #444, #222);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* 引脚样式 */
+.pin {
+    width: 35px;
+    height: 20px;
+    background-color: #ddd;
+    color: #000;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.pin:hover {
+    transform: scale(1.2);
+    background-color: #bbb;
+}
+
+/* 悬浮提示 */
+.pin-hover {
+    position: absolute;
+    padding: 5px 10px;
+    background: #0078d7;
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    pointer-events: none;
+    display: none;
+}
+
+/* 点击显示信息 */
+.pin-detail {
+    margin-top: 20px;
+    padding: 1rem;
+    min-height: 40px;
+    font-size: 14px;
+    background-color: #eee;
+    border-radius: 8px;
+    width: 300px;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* 暗黑模式 */
+body.dark {
+    background-color: #121212;
+    color: #eee;
+}
+
+body.dark header {
+    background-color: #222;
+}
+
+body.dark .board {
+    background: linear-gradient(to bottom, #222, #111);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+}
+
+body.dark .pin {
+    background-color: #333;
+    color: #eee;
+}
+
+body.dark .pin:hover {
+    background-color: #555;
+}
+
+body.dark .pin-detail {
+    background-color: #222;
+    color: #eee;
+}
+
+body.dark .pin-hover {
+    background: #bb86fc;
+}

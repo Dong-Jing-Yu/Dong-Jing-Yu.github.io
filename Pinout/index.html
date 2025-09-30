@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 引脚交互</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>ESP32 Dev Module</h1>
+        <button id="toggleTheme">切换暗黑模式</button>
+    </header>
+
+    <main class="main-content">
+        <div class="pinout-section">
+            <div class="board-container">
+                <div class="board" id="esp32Board">
+                    <!-- 引脚由JS生成 -->
+                </div>
+            </div>
+        </div>
+        <div id="pinDetail" class="pin-detail">点击引脚查看详细信息</div>
+        <div id="pinHover" class="pin-hover"></div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -148,6 +148,21 @@ function cleanup() {
     fi
 } 
 
+# 如果依赖安装失败，切回官方源重试
+function retry_() {
+    log "WARN" "尝试切换到官方源重试安装..."
+
+    # 恢复 sources.list（用原始备份）
+    if [ -f "$PREFIX/etc/apt/sources.list.bak" ]; then
+        cp "$PREFIX/etc/apt/sources.list.bak" "$PREFIX/etc/apt/sources.list"
+    else
+        echo "deb https://packages.termux.dev/apt/termux-main stable main" > "$PREFIX/etc/apt/sources.list"
+    fi
+
+    log "INFO" "已切换回官方源，更新索引..."
+    apt update -y || true
+}
+
 function check_dependencies() {
     log "INFO" "检查并安装依赖包..."
     
@@ -164,7 +179,7 @@ function check_dependencies() {
     
     # 更新包索引
     log "INFO" "更新包索引..."
-    apt update -y &>/dev/null || apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" dist-upgrade -y &>/dev/null
+    apt update -y &>/dev/null || retry_
 
     local required_packages=("proot" "tar" "wget" "xz")
     local missing_packages=()
@@ -183,18 +198,20 @@ function check_dependencies() {
     else
         log "INFO" "aria2 已就绪"
     fi
+
     # 安装缺失的包
     if [ ${#missing_packages[@]} -gt 0 ]; then
         log "INFO" "安装缺失的包: ${missing_packages[*]}"
         for package in "${missing_packages[@]}"; do
             log "INFO" "正在安装 $package..."
-            apt install -y "$package" || error_exit "无法安装 $package"
+            apt install -y "$package" || { retry_; apt install -y "$package" || error_exit "无法安装 $package"; }
         done
     fi
     
     log "INFO" "升级已安装的包..."
     apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" &>/dev/null || log "WARN" "包升级过程中出现问题"
 }
+
 
 function get_rootfs() {
     unset KEEP_IMAGE
