@@ -63,16 +63,14 @@ if [ -f "$PREFIX/etc/apt/sources.list.bak" ]; then
 fi
 if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
     log "INFO" "安装debian容器..."
-    export PD_OVERRIDE_TARBALL_URL="https://gh-proxy.com/https://raw.githubusercontent.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/refs/heads/main/Termux/proot-distro/debian-bookworm-aarch64-pd-v4.17.3.tar.xz"
-    export PD_OVERRIDE_TARBALL_SHA256="95256c700a41e34f3981af46e17f132291116c0e5e34594841ddfc766e627e85"
-    proot-distro install debian --override-alias nc
+    proot-distro install debian
     log "INFO" "安装完成!"
 fi
 
 
 init_cmd="apt update -y && \
 apt install -y sudo curl && \
-curl -O https://gh-proxy.com/https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
+curl -O /https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
 sudo bash install.sh --docker n --cli n --proxy 3 && \
 apt autoremove -y && \
 apt clean && \
