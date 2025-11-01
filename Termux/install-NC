@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# 前景色（普通）
+red='\033[1;31m'
+magenta='\033[0;1;35;95m'
+green='\033[1;32m'
+yellow='\033[1;33m'
+blue='\033[1;34m'
+light_cyan='\033[1;96m'
+
+# 前景色（更亮/加粗）
+red_fg_strong='\033[1;91m'
+green_fg_strong='\033[1;92m'
+yellow_fg_strong='\033[1;93m'
+blue_fg_strong='\033[1;94m'
+
+# 背景色
+red_bg='\033[41m'
+green_bg='\033[42m'
+yellow_bg='\033[43m'
+blue_bg='\033[44m'
+light_cyan_bg='\033[106m'
+
+# 复位
+reset='\033[0m'
+
+
+log() {
+    current_time=$(date +'%H:%M:%S')
+    case "$1" in
+        "INFO")
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[信息]${reset} $2"
+            ;;
+        "WARN")
+            echo -e "${yellow_bg}[$current_time]${reset} ${yellow_fg_strong}[警告]${reset} $2"
+            ;;
+        "ERROR")
+            echo -e "${red_bg}[$current_time]${reset} ${red_fg_strong}[错误]${reset} $2"
+            ;;
+        *)
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[调试]${reset} $2"
+            ;;
+    esac
+}
+
+# 检查命令是否存在
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+for cmd in screen proot-distro; do
+    command_exists "$cmd" || pkg install -y "$cmd"
+done
+if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
+    log "INFO" "安装debian容器..."
+    export PD_OVERRIDE_TARBALL_URL="https://github.tbedu.top/https://github.com/termux/proot-distro/releases/download/v4.29.0/ubuntu-plucky-aarch64-pd-v4.29.0.tar.xz"
+    export PD_OVERRIDE_TARBALL_SHA256="63cee3aecc0473785ef761ec1127387ed2abbea0b26d74e5187601568fbb335f"
+    proot-distro install ubuntu
+    log "INFO" "安装完成!"
+fi
+
+
+init_cmd="apt update -y && \
+apt install -y sudo curl libgcrypt20 && \
+curl -O https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
+sudo bash install.sh --docker n --cli n&& \
+apt autoremove -y && \
+apt clean && \
+rm -rf /tmp/* /var/lib/apt/lists"
+proot-distro sh nc -- bash -c "$init_cmd"
+
+echo -e "${red}NapCat容器安装成功,但请注意在运行上述指令时请加上⬇${reset}\n"
+echo -e "${green}proot-distro sh nc -- bash -c "[指令]"${reset}\n"
+echo -e "保持后台可以使用 ${green}screen -dmS nc bash -c 'proot-distro sh nc -- bash -c "[指令]"'${reset}\n\n"
+echo -e "进入容器: ${green}proot-distro login nc${reset}\n"
+echo -e "启动: ${green}proot-distro sh nc -- bash -c \"xvfb-run -a /root/Napcat/opt/QQ/qq --no-sandbox\"${reset}\n"
