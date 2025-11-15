@@ -6,11 +6,13 @@ categories: [计划,视频制作]
 
 ## Termux
 
-  - [x] Kali Nethunter (2025-03-02 -> 2025-07-10)
-{% include embed/bilibili.html id='BV1NB9tYFEVE' %}
+  - [ ] NapCat (2025-11-15)
 
-  - [x] Tmoe (2025-07-21 -> 2025-08-30)
+  - [x] Tmoe (2025-08-30)
 {% include embed/bilibili.html id='BV1fChvzZEXi' %}
+
+  - [x] Kali Nethunter (2025-07-10)
+{% include embed/bilibili.html id='BV1NB9tYFEVE' %}
 
   - [ ] signal 9 (2025-03-30 -> ...)
 

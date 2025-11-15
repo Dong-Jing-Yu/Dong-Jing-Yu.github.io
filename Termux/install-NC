@@ -67,7 +67,7 @@ sudo bash install.sh --docker n --cli n&& \
 apt autoremove -y && \
 apt clean && \
 rm -rf /tmp/* /var/lib/apt/lists"
-proot-distro sh nc -- bash -c "$init_cmd"
+proot-distro sh ubuntu -- bash -c "$init_cmd"
 
 echo -e "${red}NapCat容器安装成功,但请注意在运行上述指令时请加上⬇${reset}\n"
 echo -e "${green}proot-distro sh nc -- bash -c "[指令]"${reset}\n"
