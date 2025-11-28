@@ -48,13 +48,13 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-for cmd in screen proot-distro; do
+for cmd in proot-distro; do
     command_exists "$cmd" || pkg install -y "$cmd"
 done
-if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/nc/" ]; then
+if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu/" ]; then
     log "INFO" "安装debian容器..."
-    export PD_OVERRIDE_TARBALL_URL="https://github.tbedu.top/https://github.com/termux/proot-distro/releases/download/v4.29.0/ubuntu-plucky-aarch64-pd-v4.29.0.tar.xz"
-    export PD_OVERRIDE_TARBALL_SHA256="63cee3aecc0473785ef761ec1127387ed2abbea0b26d74e5187601568fbb335f"
+    export PD_OVERRIDE_TARBALL_URL="https://github.tbedu.top/https://github.com/termux/proot-distro/releases/download/v4.30.1/ubuntu-questing-aarch64-pd-v4.30.1.tar.xz" 
+    export PD_OVERRIDE_TARBALL_SHA256="5ab35b90cd9a9f180656261ba400a135c4c01c2da4b74522118342f985c2d328"
     proot-distro install ubuntu
     log "INFO" "安装完成!"
 fi
