@@ -415,10 +415,10 @@ function start-kex() {
 }
 
 function stop-kex() {
-    rm -f /tmp/.X*-lock
-    rm -f /tmp/.X11-unix/X*
     vncserver -kill :1 | sed s/"Xtigervnc"/"NetHunter KeX"/
     vncserver -kill :2 | sed s/"Xtigervnc"/"NetHunter KeX"/
+    rm -f /tmp/.X*-lock
+    rm -f /tmp/.X11-unix/X*
     return $?
 }
 
@@ -431,11 +431,11 @@ function status-kex() {
     sessions=\$(vncserver -list | sed s/"TigerVNC"/"NetHunter KeX"/)
     if [[ \$sessions == *"590"* ]]; then
         printf "\n\${sessions}\n"
-        printf "\n你可以使用 KeX 客户端连接这些显示器。\n\n"
+        printf "\n你可以使用 KeX 客户端连接这些显示器\n\n"
     else
 
         if [ ! -z \$starting_kex ]; then
-            printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启 termux 会话并重试。\n\n'
+            printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启 termux 会话并重试\n\n'
         fi
     fi
     return 0
