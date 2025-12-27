@@ -15,8 +15,8 @@ public void onMsg(Object msg) {
     int groupLevel = 群权限(Group, Uin);
     int level = 权限(data);
 
-    const groupMap = { 0: " 群主", 1: "管理员", 2: "成员" };
-    const levelMap = { 0: "主人", 1: "全局管理", 2: "群管理", 3: "普通" };
+    String[] groupMap = new String[] {"群主", "管理员", "成员"};
+    String[] levelMap = new String[] {"主人", "全局管理", "群管理", "普通"};
 
     StringBuilder sb = new StringBuilder();
     sb.append("ID: ").append(Uin).append("\n");
