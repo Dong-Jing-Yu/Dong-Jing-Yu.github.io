@@ -23,7 +23,7 @@ public void onMsg(Object msg) {
     String[] levelMap = new String[] {"主人", "全局管理", "群管理", "普通"};
 
     StringBuilder sb = new StringBuilder();
-    sb.append("用户: ").append(UserName).append("("+Uin+")").append("\n");
+    sb.append("用户: ").append(Name).append("("+Uin+")").append("\n");
     if (msg.IsGroup) {
         sb.append("群：").append(Group).append("\n");
     }
