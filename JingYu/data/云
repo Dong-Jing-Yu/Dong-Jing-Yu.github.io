@@ -4,41 +4,43 @@
 String[] Authors = new String[] {"1055411737"};
 
 public void onMsg(Object msg) {
-  经雨 data = new 经雨(msg);
-  String Name = data.UserName;
-  String Uin = data.Uin;
-  String Msg = data.Msg;
-  boolean IsGroup = data.IsGroup;
-  String Group = data.Group;
-  int MsgType = data.MsgType;
-  long Time = data.Time;
-  List AtList = data.AtList;
-  Object OriginMsg = data.Origin;
+  try {
+    经雨 data = new 经雨(msg);
+    String Name = data.UserName;
+    String Uin = data.Uin;
+    String Msg = data.Msg;
+    boolean IsGroup = data.IsGroup;
+    String Group = data.Group;
+    int MsgType = data.MsgType;
+    long Time = data.Time;
+    List AtList = data.AtList;
+    Object OriginMsg = data.Origin;
 
-  if(Msg.equals("我的身份")) {
-    int groupLevel = 群权限(Group, Uin);
-    int level = 权限(data);
+    if(Msg.equals("我的身份")) {
+      int groupLevel = 群权限(Group, Uin);
+      int level = 权限(data);
 
-    String[] groupMap = new String[] {"群主", "管理员", "成员"};
-    String[] levelMap = new String[] {"主人", "全局管理", "群管理", "普通"};
-
-    StringBuilder sb = new StringBuilder();
-    sb.append("用户: ").append(Name).append("("+Uin+")").append("\n");
-    if (msg.IsGroup) {
+      String[] groupMap = new String[] {"群主", "管理员", "成员"};
+      String[] levelMap = new String[] {"主人", "全局管理", "群管理", "普通"};
+      StringBuilder sb = new StringBuilder();
+      sb.append("用户: ").append(Name).append("("+Uin+")").append("\n");
+      if (msg.IsGroup) {
         sb.append("群：").append(Group).append("\n");
-    }
-    sb.append("您的当前：").append("\n");
-    if (Authors.includes(Uin)) {
+      }
+      sb.append("您的当前：").append("\n");
+      if (Authors.includes(Uin)) {
         sb.append(" 脚本作者").append("\n");
+      }
+      sb.append(" 群聊身份：").append(groupMap[groupLevel] || "未知").append("\n");
+      sb.append(" 脚本身份：").append(levelMap[level] || "未知");
+      // 发送消息回馈
+      if (msg.IsGroup) {
+          SendMsg(data, sb.toString());
+      } else {
+          SendMsg(data, sb.toString());
+      }
     }
-    sb.append(" 群聊身份：").append(groupMap[groupLevel] || "未知").append("\n");
-    sb.append(" 脚本身份：").append(levelMap[level] || "未知");
-
-    // 发送消息回馈
-    if (msg.IsGroup) {
-        SendMsg(data, sb.toString());
-    } else {
-        SendMsg(data, sb.toString());
-    }
+  } catch (e) {
+    log("云开始:\n"+e+"\n云结束");
   }
 }
