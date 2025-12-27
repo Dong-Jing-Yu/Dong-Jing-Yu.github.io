@@ -1,0 +1,188 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# 1. 颜色与常量定义
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly BLUE='\033[0;34m'
+readonly CYAN='\033[0;36m'
+readonly PURPLE='\033[0;35m'
+readonly NC='\033[0m'
+
+# 全局变量
+CONF_OS=""
+CONF_VER=""   # 存储: 22, 20, 18
+CONF_GUI=""
+RAW_ARCH=""   
+ARCH=""       
+
+# 2. 日志函数
+log() {
+    local msg="$1"
+    local level="${2:-INFO}"
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    local color=$NC
+    case "$level" in
+        "INFO")  color=$GREEN ;;
+        "WARN")  color=$YELLOW ;;
+        "ERROR") color=$RED ;;
+    esac
+    echo -e "${CYAN}[$timestamp]${NC} ${color}[$level]${NC} $msg"
+}
+
+# 3. 架构获取
+get_arch() {
+    RAW_ARCH=$(dpkg --print-architecture 2>/dev/null || uname -m)
+    case "$RAW_ARCH" in
+        aarch64|arm64) ARCH="arm64" ;;
+        x86_64|amd64)  ARCH="amd64" ;;
+        armv7l|armhf|arm) ARCH="armhf" ;;
+        i386|i686|x86) ARCH="i386" ;;
+        *) ARCH="$RAW_ARCH" ;;
+    esac
+}
+
+# 4. 环境预检查 (优化版：避免重复弹出存储权限提示)
+prepare_env() {
+    log "启动安装前环境检查..." "INFO"
+    
+    # 优化点：检查 ~/storage 是否存在。如果存在，通常说明权限已给，跳过命令。
+    if [ ! -d "$HOME/storage" ]; then
+        log "检测到尚未配置存储权限，请在弹窗中点允许" "WARN"
+        termux-setup-storage
+        # 给用户一点操作时间
+        sleep 2
+    else
+        log "存储权限已就绪，跳过配置" "INFO"
+    fi
+    
+    local needed_pkgs=("wget" "curl" "pv" "proot" "tar")
+    local missing_pkgs=()
+    for pkg in "${needed_pkgs[@]}"; do
+        if ! command -v "$pkg" &> /dev/null; then missing_pkgs+=("$pkg"); fi
+    done
+
+    if [ ${#missing_pkgs[@]} -gt 0 ]; then
+        log "补全依赖: ${missing_pkgs[*]}" "WARN"
+        pkg update -y && pkg install "${missing_pkgs[@]}" -y
+    else
+        log "依赖检查完毕: OK" "INFO"
+    fi
+}
+
+
+# 5. UI 逻辑
+show_banner() {
+    clear
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}       Termux 环境部署工具 (逻辑重置版)         ${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    local path_display=""
+    if [[ -n "$CONF_OS" ]]; then
+        path_display="$CONF_OS"
+        [[ -n "$CONF_VER" ]] && path_display="$path_display ($CONF_VER.04 LTS)"
+        [[ -n "$CONF_GUI" ]] && path_display="$path_display > $CONF_GUI"
+    fi
+    
+    echo -e "${BLUE}当前路径: ${YELLOW}$path_display${NC}"
+    echo -e "${BLUE}架构信息: ${PURPLE}$RAW_ARCH ${NC}->${PURPLE} $ARCH${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+menu_selector() {
+    local title=$1
+    local default_idx=$2
+    local is_main=$3
+    shift 3
+    local options=("$@")
+    local exit_label=$([[ "$is_main" == "true" ]] && echo "退出脚本" || echo "返回上一级")
+
+    show_banner
+    echo -e "${PURPLE}>> $title${NC}"
+    for i in "${!options[@]}"; do
+        local idx=$((i+1))
+        local suffix=$([[ $idx -eq $default_idx ]] && echo -e " ${CYAN}(默认)${NC}" || echo "")
+        echo -e "${GREEN}$idx)${NC} ${options[$i]}$suffix"
+    done
+    echo -e "-----------------------------------------"
+    echo -e "${RED}0)${NC} $exit_label"
+    
+    read -p "请输入选项 [回车默认 $default_idx]: " input
+    [[ -z "$input" ]] && return "$default_idx"
+    [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#options[@]}" ] && return "$input"
+    return 255
+}
+
+start_setup() {
+    get_arch
+    local step="OS"
+    
+    while true; do
+        case $step in
+            "OS")
+                local os_list=("Ubuntu" "Debian" "Fedora" "Manjaro" "Arch Linux" "Kali" "Alpine" "Void")
+                menu_selector "请选择操作系统" 1 "true" "${os_list[@]}"
+                local res=$?
+                if [[ $res -eq 0 ]]; then exit 0; fi
+                CONF_OS=${os_list[$((res-1))]}
+                CONF_VER=""; [[ "$CONF_OS" == "Ubuntu" ]] && step="VER" || step="GUI_TYPE"
+                ;;
+            "VER")
+                local ver_list=("Ubuntu 22.04 LTS" "Ubuntu 20.04 LTS" "Ubuntu 18.04 LTS")
+                local ver_val=("22" "20" "18")
+                menu_selector "选择 Ubuntu 版本" 1 "false" "${ver_list[@]}"
+                local res=$?
+                if [[ $res -eq 0 ]]; then CONF_OS=""; step="OS"
+                else CONF_VER=${ver_val[$((res-1))]}; step="GUI_TYPE"; fi
+                ;;
+            "GUI_TYPE")
+                local type_list=("Desktop Environment" "Window Managers" "CLI Only")
+                menu_selector "选择界面配置" 3 "false" "${type_list[@]}"
+                local res=$?
+                if [[ $res -eq 0 ]]; then
+                    if [[ "$CONF_OS" == "Ubuntu" ]]; then CONF_VER=""; step="VER"; else CONF_OS=""; step="OS"; fi
+                else
+                    case $res in 1) step="DE" ;; 2) step="WM" ;; 3) CONF_GUI="CLI Only"; step="CONFIRM" ;; esac
+                fi
+                ;;
+            "DE")
+                local de_list=("XFCE" "LXQT" "LXDE")
+                menu_selector "选择桌面环境 (DE)" 1 "false" "${de_list[@]}"
+                local res=$?
+                if [[ $res -eq 0 ]]; then step="GUI_TYPE"; else CONF_GUI=${de_list[$((res-1))]}; step="CONFIRM"; fi
+                ;;
+            "WM")
+                local wm_list=("Awesome" "Openbox" "i3")
+                menu_selector "选择窗口管理器 (WM)" 1 "false" "${wm_list[@]}"
+                local res=$?
+                if [[ $res -eq 0 ]]; then step="GUI_TYPE"; else CONF_GUI=${wm_list[$((res-1))]}; step="CONFIRM"; fi
+                ;;
+            "CONFIRM")
+                show_banner
+                echo -e "${YELLOW}最终配置汇总：${NC}"
+                log "系统架构: $RAW_ARCH ($ARCH)" "INFO"
+                log "目标系统: $CONF_OS (LTS 版本: $CONF_VER)" "INFO"
+                log "界面环境: $CONF_GUI" "INFO"
+                echo -e "-----------------------------------------"
+                read -p "确认开始安装? (y/N): " final_confirm
+                
+                if [[ "$final_confirm" =~ ^[Yy]$ ]]; then
+                    prepare_env
+                    log "准备完成，开始部署..." "INFO"
+                    break
+                else
+                    # 关键修改：取消后重置所有变量并返回到第一步
+                    log "操作已取消，正在重置并返回主菜单..." "WARN"
+                    CONF_OS=""
+                    CONF_VER=""
+                    CONF_GUI=""
+                    sleep 1.5
+                    step="OS"
+                fi
+                ;;
+        esac
+    done
+}
+
+start_setup

@@ -63,14 +63,5 @@ fi
 init_cmd="apt update -y && \
 apt install -y sudo curl libgcrypt20 && \
 curl -O https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
-sudo bash install.sh --docker n --cli n&& \
-apt autoremove -y && \
-apt clean && \
-rm -rf /tmp/* /var/lib/apt/lists"
+sudo bash install.sh --docker n --cli n"
 proot-distro sh ubuntu -- bash -c "$init_cmd"
-
-echo -e "${red}NapCat容器安装成功,但请注意在运行上述指令时请加上⬇${reset}\n"
-echo -e "${green}proot-distro sh nc -- bash -c "[指令]"${reset}\n"
-echo -e "保持后台可以使用 ${green}screen -dmS nc bash -c 'proot-distro sh nc -- bash -c "[指令]"'${reset}\n\n"
-echo -e "进入容器: ${green}proot-distro login nc${reset}\n"
-echo -e "启动: ${green}proot-distro sh nc -- bash -c \"xvfb-run -a /root/Napcat/opt/QQ/qq --no-sandbox\"${reset}\n"
