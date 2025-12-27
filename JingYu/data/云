@@ -28,8 +28,8 @@ public void onMsg(Object msg) {
         sb.append("群：").append(Group).append("\n");
       }
       sb.append("您的当前：").append("\n");
-      if (Authors.includes(Uin)) {
-        sb.append(" 脚本作者").append("\n");
+      if (Arrays.asList(Authors).contains(Uin)) {
+        sb.append(" 脚本作者: ✓").append("\n");
       }
       sb.append(" 群聊身份：").append(groupMap[groupLevel] || "未知").append("\n");
       sb.append(" 脚本身份：").append(levelMap[level] || "未知");
