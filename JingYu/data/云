@@ -23,12 +23,12 @@ public void onMsg(Object msg) {
         String[] levelMap = new String[] {"主人", "全局", "群聊", "无"};
         StringBuilder sb = new StringBuilder();
         sb.append("[PicUrl=https://q.qlogo.cn/g?b=qq&s=0&nk=" + Uin + "]").append("\n");
+        sb.append(Name).append("("+Uin+")").append("\n");
         if (msg.IsGroup) {
           sb.append("群: ").append(群名(Group)).append("("+Group+")").append("\n");
+          sb.append("群等级: ").append(群等(Group, Uin).toString()).append("\n");
+          sb.append("入群时间: ").append(formatTime(入群时(Group, Uin))).append("\n");
         }
-        sb.append("用户: ").append(Name).append("("+Uin+")").append("\n");
-        sb.append("群等级: ").append(群等(Group, Uin).toString()).append("\n");
-        sb.append("入群时间: ").append(formatTime(入群时(Group, Uin))).append("\n");
         sb.append("当前身份:").append("\n");
         if (Arrays.asList(Authors).contains(Uin)) {
           sb.append(" 脚本作者: ✓").append("\n");
