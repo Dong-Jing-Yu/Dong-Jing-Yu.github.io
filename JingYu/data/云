@@ -1,7 +1,7 @@
 删件(JYPath+".云");
 
 // 作者列表
-String[] Authors = new String[] {"1055411737"};
+String[] Authors = {"1055411737"};
 
 public void onMsg(Object msg) {
   try {
