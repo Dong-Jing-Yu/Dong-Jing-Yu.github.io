@@ -3,7 +3,7 @@
 // 作者列表
 String[] Authors = {"1055411737"};
 
-public void onMsg(Object msg) {
+public void 云(Object msg) {
     经雨 data = new 经雨(msg);
     String Name = data.UserName;
     String Uin = data.Uin;

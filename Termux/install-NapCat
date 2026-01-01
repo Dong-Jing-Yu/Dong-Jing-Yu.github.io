@@ -60,6 +60,6 @@ fi
 
 init_cmd="apt update -y && \
 apt install -y sudo curl libgcrypt20 && \
-curl -O https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
+curl -O https://gh-proxy.org/https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
 sudo bash install.sh --docker n --cli n"
 proot-distro sh NC -- bash -c "$init_cmd"
