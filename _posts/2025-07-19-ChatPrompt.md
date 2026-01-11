@@ -1,8 +1,7 @@
 ---
 title: "一些AI提示词"
 date: 2025-07-19 00:00:00 +0800
-categories: [AI]
-tags: [提示词]
+categories: [AI,提示词]
 ---
 
 # 目录
