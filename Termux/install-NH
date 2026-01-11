@@ -529,9 +529,9 @@ function update_sources_list() {
         # 备份原始文件
         cp "$sources_list" "$sources_list.backup"
         
-        # 替换为清华镜像源
-        sed -i "s@http://http.kali.org/kali@https://mirrors.tuna.tsinghua.edu.cn/kali@g" "$sources_list"
-        log "SUCCESS" "Kali 软件源已更新为清华镜像"
+        # 替换为中科大源
+        sed -i "s@http://http.kali.org/kali@https://mirrors.ustc.edu.cn/kali@g" "$sources_list"
+        log "SUCCESS" "Kali 软件源已更新为中科大镜像"
         if [ "$wimg" = "nano" ] || [ "$wimg" = "minimal" ]; then
             log "INFO" "当前非完整版,正在安装kex服务"
             nh -r apt update && nh -r apt install -y tightvncserver kali-desktop-xfce tigervnc-standalone-server x11-utils x11-xserver-utils xfonts-base
@@ -556,8 +556,8 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.3${reset}\n"
-    printf "${yellow}技术支持: ChatGPT, Claude, DeepSeek${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.4${reset}\n"
+    printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
 }
