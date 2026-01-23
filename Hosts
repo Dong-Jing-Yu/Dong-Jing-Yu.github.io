@@ -11,12 +11,14 @@
 172.67.141.68 rule34.world
 142.250.196.67 fonts.gstatic.com
 
-104.26.9.104 hanime1.me
-172.67.134.116 hitomikr.org
-104.21.45.33 nayhentai.si
-172.67.184.129 hitomi-han.com
+# https://github.com/misaka10032w/Han1meViewer
+172.64.35.107 hanime1.me
+
+108.162.195.2 hitomikr.org
+172.64.33.92 nayhentai.si
+162.159.44.41 hitomi-han.com
 
 # https://dns.google/resolve?name={URL}&type=A
 
-# 更新时间: 2026-01-10
+# 更新时间: 2026-01-23
 # 更新地址: https://Dong-Jing-Yu.github.io/Hosts
