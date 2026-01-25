@@ -51,14 +51,18 @@ command_exists() {
 for cmd in proot-distro; do
     command_exists "$cmd" || pkg install -y "$cmd"
 done
-if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/NC/" ]; then
-    log "INFO" "安装debian容器..."
-    proot-distro install debian --override-alias NC
+log "INFO" "安装debian容器..."
+if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/debian/" ]; then
+    pd i debian
     log "INFO" "安装完成!"
+    else
+    log "INFO" "发现现有debian容器,跳过安装"
 fi
 
-init_cmd="apt update -y && \
+echo "pd login debian" >>"${PREFIX}/etc/termux-login.sh"
+init_cmd="bash <(curl -sSL https://linuxmirrors.cn/main.sh) --pure-mode --protocol https --use-intranet-source true --backup false --upgrade-software true --clean-cache true && \
 apt install -y sudo curl libgcrypt20 && \
 curl -O https://gh-proxy.org/https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
 sudo bash install.sh --docker n --cli n"
-proot-distro sh NC -- bash -c "$init_cmd"
+pd sh debian -- bash -c "$init_cmd"
+pd login debian

@@ -3,7 +3,7 @@
 # https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh 原版连链接
 
 # !作废!
-
+# 原因:Docker
 # 前景色（普通）
 red='\033[1;31m'
 magenta='\033[0;1;35;95m'
@@ -127,7 +127,7 @@ sed -i '1s|#!/bin/sh|#!/bin/bash|' $target_path/$package_file_name/initscript/1p
 sed -i '1s|#!/bin/sh|#!/bin/bash|' $target_path/$package_file_name/initscript/1panel-agent.init
 echo "pd login 1panel" >>"${PREFIX}/etc/termux-login.sh"
 
-init_cmd="bash <(curl -sSL https://linuxmirrors.cn/main.sh) --pure-mode --edu --protocol https --use-intranet-source true --backup false --upgrade-software true --clean-cache true && \
+init_cmd="bash <(curl -sSL https://linuxmirrors.cn/main.sh) --pure-mode --protocol https --use-intranet-source true --backup false --upgrade-software true --clean-cache true && \
 apt install -y sudo curl
 "
 
