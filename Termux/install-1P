@@ -1,0 +1,137 @@
+#!/data/data/com.termux/files/usr/bin/bash -e
+
+# https://resource.fit2cloud.com/1panel/package/v2/quick_start.sh 原版连链接
+
+# !作废!
+
+# 前景色（普通）
+red='\033[1;31m'
+magenta='\033[0;1;35;95m'
+green='\033[1;32m'
+yellow='\033[1;33m'
+blue='\033[1;34m'
+light_cyan='\033[1;96m'
+
+# 前景色（更亮/加粗）
+red_fg_strong='\033[1;91m'
+green_fg_strong='\033[1;92m'
+yellow_fg_strong='\033[1;93m'
+blue_fg_strong='\033[1;94m'
+
+# 背景色
+red_bg='\033[41m'
+green_bg='\033[42m'
+yellow_bg='\033[43m'
+blue_bg='\033[44m'
+light_cyan_bg='\033[106m'
+
+# 复位
+reset='\033[0m'
+
+
+log() {
+    current_time=$(date +'%H:%M:%S')
+    case "$1" in
+        "INFO")
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[信息]${reset} $2"
+            ;;
+        "WARN")
+            echo -e "${yellow_bg}[$current_time]${reset} ${yellow_fg_strong}[警告]${reset} $2"
+            ;;
+        "ERROR")
+            echo -e "${red_bg}[$current_time]${reset} ${red_fg_strong}[错误]${reset} $2"
+            ;;
+        *)
+            echo -e "${blue_bg}[$current_time]${reset} ${blue_fg_strong}[调试]${reset} $2"
+            ;;
+    esac
+}
+
+
+osCheck=`uname -a`
+if [[ $osCheck =~ 's390x' ]] || [[ $osCheck =~ 'x86_64' ]] || [[ $osCheck =~ 'ppc64le' ]];then
+    log "INFO" "本脚本为Termux环境特供,请您使用官方脚本安装"
+    log "INFO" "URL: https://1panel.cn/docs/v2/installation/online_installation/"
+    exit 1
+elif [[ $osCheck =~ 'arm64' ]] || [[ $osCheck =~ 'aarch64' ]];then
+    architecture="arm64"
+elif [[ $osCheck =~ 'armv7l' ]];then
+    architecture="armv7"
+else
+    log "ERROR" "暂不支持的系统架构,请参阅官方文档,选择受支持的系统"
+    exit 1
+fi
+
+for cmd in proot-distro tar; do
+    log "INFO" "安装 $cmd..."
+    pkg install -y "$cmd"
+done
+
+if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/1panel/" ]; then
+    log "INFO" "安装debian容器..."
+    if [ ! -f "$PREFIX/etc/proot-distro/1panel.override.sh" ];then
+        pd i debian --override-alias 1panel
+    else
+        pd i 1panel
+    fi
+    log "INFO" "安装完成!"
+fi
+
+VERSION=$(curl -s https://resource.fit2cloud.com/1panel/package/v2/stable/latest)
+if [[ "x${VERSION}" == "x" ]];then
+    log "ERROR" "获取最新版本失败，请稍候重试"
+    exit 1
+fi
+HASH_FILE_URL="https://resource.fit2cloud.com/1panel/package/v2/stable/${VERSION}/release/checksums.txt"
+
+package_file_name="1panel-${VERSION}-linux-${architecture}"
+package_file="${package_file_name}.tar.gz"
+package_download_url="https://resource.fit2cloud.com/1panel/package/v2/stable/${VERSION}/release/${package_file}"
+expected_hash=$(curl -s "$HASH_FILE_URL" | grep "$package_file" | awk '{print $1}')
+
+if [ -f ${package_file} ];then
+    actual_hash=$(sha256sum "$package_file" | awk '{print $1}')
+    if [[ "$expected_hash" == "$actual_hash" ]];then
+        log "INFO" "安装包已存在，跳过下载"
+        rm -rf 1panel-${VERSION}-linux-${architecture}
+        tar zxvf ${package_file}
+        exit 0
+    c
+        log "WARN" "已存在安装包，但是哈希值不一致，开始重新下载"
+        rm -f ${package_file}
+    fi
+fi
+
+log "INFO" "开始下载 1Panel ${VERSION} 版本在线安装包"
+log "INFO" "安装包下载地址： ${package_download_url}"
+
+curl -LOk -o ${package_file} ${package_download_url}
+if [ ! -f ${package_file} ];then
+	log "ERROR" "下载安装包失败，请稍候重试。"
+	exit 1
+fi
+target_path="$PREFIX/var/lib/proot-distro/installed-rootfs/1panel/root"
+
+if [ ! -d "$target_path/$package_file_name" ]; then
+    log "INFO" "解压安装包到容器文件系统中..."
+    tar zxvf "${package_file}" -C "$target_path"
+    if [ $? != 0 ];then
+        log "ERROR" "下载安装包失败，请稍候重试。"
+        rm -f ${package_file}
+        exit 1
+    fi
+fi
+
+chmod 755 "$target_path/$package_file_name/install.sh"
+sed -i '1s|#!/bin/sh|#!/bin/bash|' $target_path/$package_file_name/initscript/1panel-core.init
+sed -i '1s|#!/bin/sh|#!/bin/bash|' $target_path/$package_file_name/initscript/1panel-agent.init
+echo "pd login 1panel" >>"${PREFIX}/etc/termux-login.sh"
+
+init_cmd="bash <(curl -sSL https://linuxmirrors.cn/main.sh) --pure-mode --edu --protocol https --use-intranet-source true --backup false --upgrade-software true --clean-cache true && \
+apt install -y sudo curl
+"
+
+pd sh 1panel -- bash -c "$init_cmd"
+pd login 1panel
+
+# /bin/bash install.sh
