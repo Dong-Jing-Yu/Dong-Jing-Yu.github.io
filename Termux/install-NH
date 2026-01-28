@@ -7,6 +7,8 @@ USERNAME=kali
 
 # sed -i 's/\r$//' install-NH
 
+no_verify=false
+
 log() {
     current_time=$(date +'%H:%M:%S')
     case "$1" in
@@ -556,7 +558,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.4${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.5${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
@@ -592,12 +594,19 @@ function main() {
     
     # 主流程
     print_banner
+    if [ "$no_verify" = true ]; then
+        log "WARN" "当前跳过SHA验证" 
+    fi
     get_arch
     set_strings
     prepare_fs
     check_dependencies
     get_rootfs
-    verify_sha
+    if [ "$no_verify" = false ]; then
+        verify_sha
+    else
+        log "INFO" "跳过SHA验证"
+    fi
     extract_rootfs
     create_launcher
     cleanup
@@ -631,6 +640,39 @@ function main() {
     printf "${green}[+] nethunter kex kill    # 强制停止所有 KeX 会话${reset}\n"
     echo
 }
+
+shell_help() {
+    cat << EOF
+用法: $0 [选项]
+
+选项:
+    --no-verify    跳过SHA验证
+    --help         显示此帮助信息
+
+示例:
+    $0 --no-verify  快速安装（跳过验证）
+    $0              正常安装（进行完整性验证）
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-verify|--no_verify|-nv)
+            no_verify=true
+            shift
+            ;;
+        --help|-h)
+            shell_help
+            exit 0
+            ;;
+        *)
+            echo "错误：未知参数 '$1'"
+            shell_help
+            exit 1
+            ;;
+    esac
+done
+
 
 # 脚本入口点
 main "$@"
