@@ -62,7 +62,7 @@ fi
 echo "pd login debian" >>"${PREFIX}/etc/termux-login.sh"
 init_cmd="bash <(curl -sSL https://linuxmirrors.cn/main.sh) --pure-mode --protocol https --use-intranet-source true --backup false --upgrade-software true --clean-cache true && \
 apt install -y sudo curl libgcrypt20 && \
-curl -O https://gh-proxy.org/https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
+curl -O https://raw.githubusercontent.com/NapNeko/NapCat-Installer/refs/heads/main/script/install.sh && \
 echo \"alias NC='xvfb-run -a /root/Napcat/opt/QQ/qq --no-sandbox'\" >> ~/.bashrc && \
 sudo bash install.sh --docker n --cli n --proxy 0"
 pd sh debian -- bash -c "$init_cmd"
