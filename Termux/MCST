@@ -1,48 +1,15 @@
 #!/bin/bash
 
-
-# https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u472-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u472b08.tar.gz
-
-# 模组服
-## Fabric
-## Forge
-## NeoForge
-
-# 插件服
-## purpur
-## paper
-
-# adoptium
-## JDK 25 - LTS
-## JDK 21 - LTS
-## JDK 17 - LTS
-## JDK 11 - LTS
-## JDK 8 - LTS
-
 # 全局变量
-ROOT_DIR="$HOME/MCST"
+
+ROOT_DIR="$HOME/.MCST"
 SERVER_DIR="$ROOT_DIR/Servers"
 JDK_DIR="$ROOT_DIR/JDKs"
 ARCH=$(uname -m)
 
-# 颜色定义
-setup_colors() {
-    NC='\033[0m'
-    RED='\033[1;31m'
-    GREEN='\033[1;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[1;34m'
-    PURPLE='\033[1;35m'
-    CYAN='\033[1;96m'
-    
-    red_bg='\033[41m'
-    blue_bg='\033[44m'
-    yellow_bg='\033[43m'
-    
-    blue_fg_strong='\033[1;94m'
-    yellow_fg_strong='\033[1;93m'
-    red_fg_strong='\033[1;91m'
-}
+init_lock=false
+init_VERSION="0.0.1"
+LOCK_FILE="$ROOT_DIR/init_lock"
 
 log() {
     local current_time=$(date +'%H:%M:%S')
@@ -56,15 +23,107 @@ log() {
 
 check_arch() {
     if [[ "$ARCH" != "aarch64" && "$ARCH" != "x86_64" ]]; then
-        echo "不支持的架构: $ARCH (仅支持 aarch64 和 x86_64)"
+        log "ERROR" "不支持的架构: $ARCH (仅支持 aarch64 和 x86_64)"
         exit 1
     fi
+}
+
+_init() {
+    log "INFO" "执行初始化流程..."
+    for dir in "$ROOT_DIR" "$SERVER_DIR" "$JDK_DIR"; do
+        if [ ! -d "$dir" ]; then
+            mkdir -p "$dir"
+            log "INFO" "创建目录: $dir"
+        fi
+    done
+
+
+    log "INFO" "检查并安装依赖包..."
+    
+    # 备份原始 sources.list
+    if [ ! -f "$PREFIX/etc/apt/sources.list.bak" ]; then
+        cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
+    fi
+    
+    # 更新源到清华镜像
+    if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
+        log "INFO" "更新软件源到清华镜像..."
+        sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
+    fi
+    
+    # 更新包索引
+    log "INFO" "更新包索引..."
+    apt update && apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
+
+    local required_packages=("curl" "tar" "wget" "unzip" "git")
+    local missing_packages=()
+    
+    # 检查缺失的包
+    for package in "${required_packages[@]}"; do
+        if ! command_exists "$package"; then
+            missing_packages+=("$package")
+        else
+            log "INFO" "$package 已就绪"
+        fi
+    done
+
+    # 安装缺失的包
+    if [ ${#missing_packages[@]} -gt 0 ]; then
+        log "INFO" "安装缺失的包: ${missing_packages[*]}"
+        for package in "${missing_packages[@]}"; do
+            log "INFO" "正在安装 $package..."
+            apt install -y "$package" || { log "WARN" "重新尝试安装 $package"; apt install -y "$package" || log "ERROR" "无法安装 $package"; }
+        done
+    fi
+
+
+    echo "$init_VERSION" > "$LOCK_FILE"
+    log "INFO" "初始化完成，版本 $init_VERSION"
+    init_lock=true
+}
+
+
+check_init() {
+    log "INFO" "初始化检查..."
+    check_arch
+    if [ ! -f "$LOCK_FILE" ];then
+        _init
+    else
+        local stored_version=$(cat "$LOCK_FILE" 2>/dev/null)
+        if [ "$stored_version" != "$init_VERSION" ]; then
+            log "WARN" "检测到版本不匹配,当前版本: $init_VERSION 锁文件中版本: $stored_version"
+            _init
+        else
+            init_lock=true
+            log "INFO" "初始化已完成，版本匹配: $init_VERSION"
+        fi
+    fi
+    sleep 1
+}
+
+download_file() {
+    local url="$1"
+    local dest="$2"
+
+    if [[ "$url" == https://github.com/* ]]; then
+        url="https://gh-proxy.org/$url"
+        log "INFO" "使用 GitHub 镜像"
+    fi
+
+    log "INFO" "下载文件: $url"
+    wget -q --show-progress -O "$dest" "$url"
+    if [ $? -ne 0 ]; then
+        log "ERROR" "下载失败: $url"
+        return 1
+    fi
+    log "INFO" "下载完成: $dest"
+    return 0
 }
 
 
 
 # 获取下载链接的函数
-get_adoptium_url() {
+get_jdk() {
     local ADOPTIUM_BASE="https://github.com/adoptium"
     local ver=$1
     local arch_tag=""
@@ -78,32 +137,36 @@ get_adoptium_url() {
             local release_tag="jdk-25.0.2+10"
             local file_ver="25.0.2_10"
             local filename="OpenJDK25U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            echo "${ADOPTIUM_BASE}/temurin25-binaries/releases/download/${release_tag}/${filename}"
+            install_jdk "${ADOPTIUM_BASE}/temurin25-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 25
+            log "INFO" "JDK 25 安装完成"
             ;;
         "21")
             local release_tag="jdk-21.0.10+7"
             local file_ver="21.0.10_7"
-
             local filename="OpenJDK21U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            echo "${ADOPTIUM_BASE}/temurin21-binaries/releases/download/${release_tag}/${filename}"
+            install_jdk "${ADOPTIUM_BASE}/temurin21-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 21
+            log "INFO" "JDK 21 安装完成"
             ;;
         "17")
             local release_tag="jdk-17.0.18+8"
             local file_ver="17.0.18_8"
             local filename="OpenJDK17U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            echo "${ADOPTIUM_BASE}/temurin17-binaries/releases/download/${release_tag}/${filename}"
+            install_jdk "${ADOPTIUM_BASE}/temurin17-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 17
+            log "INFO" "JDK 17 安装完成"
             ;;
         "11")
             local release_tag="jdk-11.0.29+7"
             local file_ver="11.0.29_7"
             local filename="OpenJDK11U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            echo "${ADOPTIUM_BASE}/temurin11-binaries/releases/download/${release_tag}/${filename}"
+            install_jdk "${ADOPTIUM_BASE}/temurin11-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 11
+            log "INFO" "JDK 11 安装完成"
             ;;
         "8")
             local release_tag="jdk8u472-b08"
             local file_ver="8u472b08"
             local filename="OpenJDK8U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            echo "${ADOPTIUM_BASE}/temurin8-binaries/releases/download/${release_tag}/${filename}"
+            install_jdk "${ADOPTIUM_BASE}/temurin8-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 8 
+            log "INFO" "JDK 8 安装完成"
             ;;
         *)
             return 1
@@ -111,24 +174,38 @@ get_adoptium_url() {
     esac
 }
 
-# 执行安装的逻辑
 install_jdk() {
-    local ver=$1
-    local download_url=$(get_adoptium_url "$ver")
-    
-    if [[ -z "$download_url" ]]; then
-        log "ERROR" "未配置 JDK $ver 的下载地址"
-        return
+    local url=$1
+    local tag=$2
+    local dest=$3
+
+    log "INFO" "正在安装 JDK $dest ($ARCH)..."
+
+    log "INFO" "$url"
+    log "INFO" "$tag"
+    log "INFO" "$dest"
+
+    if [ -d "$JDK_DIR/$tag/" ]; then
+        rm -rf "$JDK_DIR/$tag/"
     fi
 
-    log "INFO" "正在获取 JDK $ver ($ARCH)..."
-    log "INFO" "链接: $download_url"
-    
-    # 这里可以接具体的下载和解压逻辑
-    # mkdir -p "$JDK_DIR/jdk$ver"
-    # curl -L "$download_url" | tar -xz -C "$JDK_DIR/jdk$ver" --strip-components=1
-}
+    if [ -d "$JDK_DIR/JDK$dest" ]; then
+        log "INFO" "JDK $dest 已存在"
+        $JDK_DIR/JDK$dest/bin/java -version
+        if [ $? -eq 0 ]; then
+            log "INFO" "JDK $dest 安装验证通过"
+            return 0
+        else
+            log "WARN" "JDK $dest 安装验证失败，重新安装"
+            rm -rf "$JDK_DIR/JDK$dest"
+        fi
+    fi
 
+    download_file "$url" "$JDK_DIR/JDK$dest.tar.gz"
+    tar -xzf "$JDK_DIR/JDK$dest.tar.gz" -C "$JDK_DIR"
+    mv "$JDK_DIR/$tag/" "$JDK_DIR/JDK$dest/"
+    rm "$JDK_DIR/JDK$dest.tar.gz"
+}
 
 
 show_banner() {
@@ -183,8 +260,23 @@ menu_selector() {
 }
 
 main() {
-    setup_colors
-    check_arch
+    # 颜色定义    
+    NC='\033[0m'
+    RED='\033[1;31m'
+    GREEN='\033[1;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[1;34m'
+    PURPLE='\033[1;35m'
+    CYAN='\033[1;96m'
+    
+    red_bg='\033[41m'
+    blue_bg='\033[44m'
+    yellow_bg='\033[43m'
+    
+    blue_fg_strong='\033[1;94m'
+    yellow_fg_strong='\033[1;93m'
+    red_fg_strong='\033[1;91m'
+    check_init
     
     local step="MAIN"
     while true; do
@@ -234,26 +326,20 @@ main() {
                 ;;
             "JDK_VENDOR")
                 STEP_PATH="主菜单 > JDK"
-                local vendor_list=("Adoptium (Temurin)")
-                menu_selector "选择 JDK 厂商" 1 "false" "${vendor_list[@]}"
-                case $? in
-                    0) step="MAIN" ;;
-                    1) step="JDK_VER_ADOPTIUM" ;;
-                esac
-                ;;
-            "JDK_VER_ADOPTIUM")
-                STEP_PATH="主菜单 > JDK > Adoptium"
                 local jdk_list=("JDK 25 (LTS)" "JDK 21 (LTS)" "JDK 17 (LTS)" "JDK 11 (LTS)" "JDK 8 (LTS)")
                 menu_selector "选择版本" 1 "false" "${jdk_list[@]}"
                 local res=$?
                 if [[ $res -eq 0 ]]; then 
-                    step="JDK_VENDOR"
+                    step="MAIN"
                 else
                     # 提取数字，如 25, 21, 8
                     local ver=$(echo "${jdk_list[$((res-1))]}" | sed 's/[^0-9]//g')
-                    install_jdk "$ver"
+                    get_jdk "$ver"
                     sleep 2
                 fi
+                ;;
+                *)
+                step="MAIN"
                 ;;
         esac
     done
