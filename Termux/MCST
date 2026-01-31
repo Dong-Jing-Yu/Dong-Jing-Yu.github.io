@@ -22,8 +22,8 @@ log() {
 }
 
 check_arch() {
-    if [[ "$ARCH" != "aarch64" && "$ARCH" != "x86_64" ]]; then
-        log "ERROR" "不支持的架构: $ARCH (仅支持 aarch64 和 x86_64)"
+    if [[ "$ARCH" != "aarch64"]]; then
+        log "ERROR" "不支持的架构: $ARCH (仅支持 aarch64 )"
         exit 1
     fi
 }
@@ -55,7 +55,7 @@ _init() {
     log "INFO" "更新包索引..."
     apt update && apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
-    local required_packages=("curl" "tar" "wget" "unzip" "git")
+    local required_packages=("curl" "tar" "wget" "unzip" "git" "libandroid-shmem" "libandroid-spawn" "freetype")
     local missing_packages=()
     
     # 检查缺失的包
@@ -124,49 +124,22 @@ download_file() {
 
 # 获取下载链接的函数
 get_jdk() {
-    local ADOPTIUM_BASE="https://github.com/adoptium"
     local ver=$1
-    local arch_tag=""
-    
-    # 转换架构标识
-    [[ "$ARCH" == "aarch64" ]] && arch_tag="aarch64"
-    [[ "$ARCH" == "x86_64" ]] && arch_tag="x64"
-
     case "$ver" in
         "25")
-            local release_tag="jdk-25.0.2+10"
-            local file_ver="25.0.2_10"
-            local filename="OpenJDK25U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            install_jdk "${ADOPTIUM_BASE}/temurin25-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 25
-            log "INFO" "JDK 25 安装完成"
+            install_jdk 25
             ;;
         "21")
-            local release_tag="jdk-21.0.10+7"
-            local file_ver="21.0.10_7"
-            local filename="OpenJDK21U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            install_jdk "${ADOPTIUM_BASE}/temurin21-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 21
-            log "INFO" "JDK 21 安装完成"
+            install_jdk 21
             ;;
         "17")
-            local release_tag="jdk-17.0.18+8"
-            local file_ver="17.0.18_8"
-            local filename="OpenJDK17U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            install_jdk "${ADOPTIUM_BASE}/temurin17-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 17
-            log "INFO" "JDK 17 安装完成"
+            install_jdk 17
             ;;
         "11")
-            local release_tag="jdk-11.0.29+7"
-            local file_ver="11.0.29_7"
-            local filename="OpenJDK11U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            install_jdk "${ADOPTIUM_BASE}/temurin11-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 11
-            log "INFO" "JDK 11 安装完成"
+            install_jdk 11
             ;;
         "8")
-            local release_tag="jdk8u472-b08"
-            local file_ver="8u472b08"
-            local filename="OpenJDK8U-jdk_${arch_tag}_linux_hotspot_${file_ver}.tar.gz"
-            install_jdk "${ADOPTIUM_BASE}/temurin8-binaries/releases/download/${release_tag}/${filename}" "$release_tag" 8 
-            log "INFO" "JDK 8 安装完成"
+            install_jdk 8
             ;;
         *)
             return 1
@@ -175,36 +148,18 @@ get_jdk() {
 }
 
 install_jdk() {
-    local url=$1
-    local tag=$2
-    local dest=$3
+    local URL="https://github.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/releases/download/jdk"
+    local tag=$1
 
-    log "INFO" "正在安装 JDK $dest ($ARCH)..."
+    log "INFO" "正在安装 JDK $tag..."
 
-    log "INFO" "$url"
-    log "INFO" "$tag"
-    log "INFO" "$dest"
+    download_file "$URL"/jdk"$tag".tar.gz "$JDK_DIR/$tag.tar.gz"
 
-    if [ -d "$JDK_DIR/$tag/" ]; then
-        rm -rf "$JDK_DIR/$tag/"
-    fi
+    tar -xzf "$JDK_DIR/$tag.tar.gz" -C "$JDK_DIR"
+    mv "$JDK_DIR/java-$tag-openjdk/" "$JDK_DIR/JDK$tag/"
 
-    if [ -d "$JDK_DIR/JDK$dest" ]; then
-        log "INFO" "JDK $dest 已存在"
-        $JDK_DIR/JDK$dest/bin/java -version
-        if [ $? -eq 0 ]; then
-            log "INFO" "JDK $dest 安装验证通过"
-            return 0
-        else
-            log "WARN" "JDK $dest 安装验证失败，重新安装"
-            rm -rf "$JDK_DIR/JDK$dest"
-        fi
-    fi
-
-    download_file "$url" "$JDK_DIR/JDK$dest.tar.gz"
-    tar -xzf "$JDK_DIR/JDK$dest.tar.gz" -C "$JDK_DIR"
-    mv "$JDK_DIR/$tag/" "$JDK_DIR/JDK$dest/"
-    rm "$JDK_DIR/JDK$dest.tar.gz"
+    rm "$JDK_DIR/$tag.tar.gz"
+    log "INFO" "JDK $tag 安装完成"
 }
 
 
