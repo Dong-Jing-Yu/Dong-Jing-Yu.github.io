@@ -7,6 +7,7 @@ SERVER_DIR="$ROOT_DIR/Servers"
 JDK_DIR="$ROOT_DIR/JDKs"
 JDK_LIST=(25 21 17 11)
 ARCH=$(uname -m)
+
 init_lock=false
 init_VERSION="0.0.1"
 LOCK_FILE="$ROOT_DIR/init_lock"
@@ -117,6 +118,15 @@ download_file() {
     return 0
 }
 
+get_server_list() {
+    SERVER_LIST=()
+    if [ -d "$SERVER_DIR" ]; then
+        for dir in "$SERVER_DIR"/*/; do
+            [ -d "$dir" ] && SERVER_LIST+=("$(basename "$dir")")
+        done
+    fi
+}
+
 install_jdk() {
     local URL="https://github.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/releases/download/jdk"
     local tag=$1
@@ -193,7 +203,6 @@ menu_selector() {
     done
     echo -e "---------------------------------------------"
     echo -e "${RED}0)${NC} $exit_label"
-    
     read -p "请输入选项 [Enter $default_idx]: " input
     [[ -z "$input" ]] && return "$default_idx"
     [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#options[@]}" ] && return "$input"
@@ -224,21 +233,36 @@ main() {
         case $step in
             "MAIN")
                 STEP_PATH="主菜单"
-                local main_list=("服务器管理" "JDK 安装" "更新脚本" "关于脚本")
-                menu_selector "请选择操作" 1 "true" "${main_list[@]}"
+                local list=("服务器" "JDK 安装" "更新脚本" "关于脚本")
+                menu_selector "请选择操作" 1 "true" "${list[@]}"
                 case $? in
                     0) exit 0 ;;
-                    1) step="SERVER_TYPE" ;;
+                    1) step="SERVER" ;;
                     2) step="JDK_VENDOR" ;;
                     3) log "INFO" "功能开发中..."; sleep 1 ;;
                     4) log "INFO" "By 东经雨"; sleep 2 ;;
                     *) log "ERROR" "无效输入" ;;
                 esac
                 ;;
-            "SERVER_TYPE")
+            "SERVER")
                 STEP_PATH="主菜单 > 服务器"
-                local type_list=("模组服 (Fabric/Forge)" "插件服 (Purpur/Paper)")
-                menu_selector "选择服务器类型" 1 "false" "${type_list[@]}"
+                local list=()
+                get_server_list
+                for server in "${SERVER_LIST[@]}"; do
+                    list+=("$server")
+                done
+                local list+=("$YELLOW新建$NC")
+                menu_selector "选择操作" ${#list[@]} "false" "${list[@]}"
+                case $? in
+                    ${#list[@]}) step="SERVER_TYPE" ;;
+                    0) step="MAIN" ;;
+                    *) log "ERROR" "无效输入" ;;
+                esac
+                ;;
+            "SERVER_TYPE")
+                STEP_PATH="主菜单 > 服务器 > 新建"
+                local list=("模组服 (Mod)" "插件服 (Plugin)" )
+                menu_selector "选择服务器类型" 1 "false" "${list[@]}"
                 case $? in
                     0) step="MAIN" ;;
                     1) step="SERVER_MOD" ;;
@@ -246,17 +270,17 @@ main() {
                 esac
                 ;;
             "SERVER_MOD")
-                STEP_PATH="主菜单 > 服务器 > 模组服"
-                local mod_list=("Fabric" "Forge" "NeoForge")
-                menu_selector "选择模组核心" 1 "false" "${mod_list[@]}"
+                STEP_PATH="服务器 > 新建 > 模组服"
+                local list=("Fabric" "Forge" "NeoForge")
+                menu_selector "选择模组核心" 1 "false" "${list[@]}"
                 local res=$?
                 if [[ $res -eq 0 ]]; then step="SERVER_TYPE"; else
-                    log "INFO" "已选择模组核心: ${mod_list[$((res-1))]}"
+                    log "INFO" "已选择模组核心: ${list[$((res-1))]}"
                     sleep 1
                 fi
                 ;;
             "SERVER_PLUGIN")
-                STEP_PATH="主菜单 > 服务器 > 插件服"
+                STEP_PATH="服务器 > 新建 > 插件服"
                 local plugin_list=("Purpur" "Paper")
                 menu_selector "选择插件核心" 1 "false" "${plugin_list[@]}"
                 local res=$?
@@ -267,21 +291,21 @@ main() {
                 ;;
             "JDK_VENDOR")
                 STEP_PATH="主菜单 > JDK"
-                local jdk_list=()
+                local list=()
                 
                 for ver in "${JDK_LIST[@]}"; do
                     if [ -d "$JDK_DIR/JDK$ver" ]; then
                         if check_jdk $ver; then
-                            jdk_list+=("JDK $ver (LTS) - $GREEN可用$NC")
+                            list+=("JDK $ver (LTS) - $GREEN可用$NC")
                         else
-                            jdk_list+=("JDK $ver (LTS) - $RED不可用$NC")
+                            list+=("JDK $ver (LTS) - $RED不可用$NC")
                         fi
                     else
-                        jdk_list+=("JDK $ver (LTS) - $YELLOW未安装$NC")
+                        list+=("JDK $ver (LTS) - $YELLOW未安装$NC")
                     fi
                 done
 
-                menu_selector "选择版本" 0 "false" "${jdk_list[@]}"
+                menu_selector "选择版本" 0 "false" "${list[@]}"
                 local res=$?
                 
                 if [[ $res -eq 0 ]]; then 
