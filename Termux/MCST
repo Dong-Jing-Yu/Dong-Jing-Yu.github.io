@@ -154,7 +154,7 @@ check_jdk() {
 }
 
 show_banner() {
-    # clear
+    clear
     local R='\033[1;31m'
     local Y='\033[1;33m'
     local G='\033[1;32m'
