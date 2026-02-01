@@ -5,8 +5,8 @@
 ROOT_DIR="$HOME/.MCST"
 SERVER_DIR="$ROOT_DIR/Servers"
 JDK_DIR="$ROOT_DIR/JDKs"
+JDK_LIST=(25 21 17 11)
 ARCH=$(uname -m)
-
 init_lock=false
 init_VERSION="0.0.1"
 LOCK_FILE="$ROOT_DIR/init_lock"
@@ -19,13 +19,6 @@ log() {
         "ERROR") echo -e "${red_bg}[$current_time]${NC} ${red_fg_strong}[错误]${NC} $2" ;;
         *)       echo -e "${blue_bg}[$current_time]${NC} ${blue_fg_strong}[调试]${NC} $2" ;;
     esac
-}
-
-check_arch() {
-    if [[ "$ARCH" != "aarch64"]]; then
-        log "ERROR" "不支持的架构: $ARCH (仅支持 aarch64 )"
-        exit 1
-    fi
 }
 
 _init() {
@@ -80,12 +73,16 @@ _init() {
     echo "$init_VERSION" > "$LOCK_FILE"
     log "INFO" "初始化完成，版本 $init_VERSION"
     init_lock=true
+    sleep 1
 }
 
 
 check_init() {
     log "INFO" "初始化检查..."
-    check_arch
+    if [ "${ARCH}" != "aarch64" ]; then
+        log "ERROR" "不支持的架构: ${ARCH} (仅支持 aarch64)"
+        exit 1
+    fi
     if [ ! -f "$LOCK_FILE" ];then
         _init
     else
@@ -120,38 +117,22 @@ download_file() {
     return 0
 }
 
-
-
-# 获取下载链接的函数
-get_jdk() {
-    local ver=$1
-    case "$ver" in
-        "25")
-            install_jdk 25
-            ;;
-        "21")
-            install_jdk 21
-            ;;
-        "17")
-            install_jdk 17
-            ;;
-        "11")
-            install_jdk 11
-            ;;
-        "8")
-            install_jdk 8
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
 install_jdk() {
     local URL="https://github.com/Dong-Jing-Yu/Dong-Jing-Yu.github.io/releases/download/jdk"
     local tag=$1
 
     log "INFO" "正在安装 JDK $tag..."
+
+    if [ -d "$JDK_DIR/JDK$tag" ]; then
+        log "INFO" "JDK $tag 已安装"
+        if check_jdk $tag; then
+            log "INFO" "JDK $tag 可用，跳过安装"
+            return 0
+        else
+            log "WARN" "JDK $tag 安装损坏，重新安装"
+            rm -rf "$JDK_DIR/JDK$tag"
+        fi
+    fi
 
     download_file "$URL"/jdk"$tag".tar.gz "$JDK_DIR/$tag.tar.gz"
 
@@ -162,9 +143,18 @@ install_jdk() {
     log "INFO" "JDK $tag 安装完成"
 }
 
+check_jdk() {
+    local ver=$1
+    "$JDK_DIR/JDK$ver/bin/java" -version >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
 show_banner() {
-    clear
+    # clear
     local R='\033[1;31m'
     local Y='\033[1;33m'
     local G='\033[1;32m'
@@ -199,16 +189,12 @@ menu_selector() {
     for i in "${!options[@]}"; do
         local idx=$((i+1))
         local suffix=""
-        # 拆分逻辑，提高兼容性
-        if [[ $idx -eq $default_idx ]]; then
-            suffix=" ${CYAN}(默认)${NC}"
-        fi
         echo -e "${GREEN}$idx)${NC} ${options[$i]}$suffix"
     done
     echo -e "---------------------------------------------"
     echo -e "${RED}0)${NC} $exit_label"
     
-    read -p "请输入选项 [回车默认 $default_idx]: " input
+    read -p "请输入选项 [Enter $default_idx]: " input
     [[ -z "$input" ]] && return "$default_idx"
     [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#options[@]}" ] && return "$input"
     return 255
@@ -281,16 +267,31 @@ main() {
                 ;;
             "JDK_VENDOR")
                 STEP_PATH="主菜单 > JDK"
-                local jdk_list=("JDK 25 (LTS)" "JDK 21 (LTS)" "JDK 17 (LTS)" "JDK 11 (LTS)" "JDK 8 (LTS)")
-                menu_selector "选择版本" 1 "false" "${jdk_list[@]}"
+                local jdk_list=()
+                
+                for ver in "${JDK_LIST[@]}"; do
+                    if [ -d "$JDK_DIR/JDK$ver" ]; then
+                        if check_jdk $ver; then
+                            jdk_list+=("JDK $ver (LTS) - $GREEN可用$NC")
+                        else
+                            jdk_list+=("JDK $ver (LTS) - $RED不可用$NC")
+                        fi
+                    else
+                        jdk_list+=("JDK $ver (LTS) - $YELLOW未安装$NC")
+                    fi
+                done
+
+                menu_selector "选择版本" 0 "false" "${jdk_list[@]}"
                 local res=$?
+                
                 if [[ $res -eq 0 ]]; then 
                     step="MAIN"
+                elif [[ $res -ge 1 && $res -le ${#versions[@]} ]]; then  # 动态检查数组大小
+                    local ver=${versions[$((res-1))]}
+                    install_jdk "$ver"
                 else
-                    # 提取数字，如 25, 21, 8
-                    local ver=$(echo "${jdk_list[$((res-1))]}" | sed 's/[^0-9]//g')
-                    get_jdk "$ver"
-                    sleep 2
+                    log "ERROR" "无效的菜单选择: $res"
+                    step="MAIN"
                 fi
                 ;;
                 *)
