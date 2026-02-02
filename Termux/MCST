@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# 全局变量
-
+# ==================== 全局变量 ====================
 ROOT_DIR="$HOME/.MCST"
 SERVER_DIR="$ROOT_DIR/Servers"
 JDK_DIR="$ROOT_DIR/JDKs"
@@ -9,9 +8,30 @@ JDK_LIST=(25 21 17 11)
 ARCH=$(uname -m)
 
 init_lock=false
-init_VERSION="0.0.1"
+init_VERSION="1.0.0"
 LOCK_FILE="$ROOT_DIR/init_lock"
 
+# JDK 选择相关
+SELECTED_JDK_VERSION=""
+
+# ==================== 颜色定义 (统一放在开头) ====================
+NC='\033[0m'
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+PURPLE='\033[1;35m'
+CYAN='\033[1;96m'
+
+red_bg='\033[41m'
+blue_bg='\033[44m'
+yellow_bg='\033[43m'
+
+blue_fg_strong='\033[1;94m'
+yellow_fg_strong='\033[1;93m'
+red_fg_strong='\033[1;91m'
+
+# ==================== 日志函数 ====================
 log() {
     local current_time=$(date +'%H:%M:%S')
     case "$1" in
@@ -22,6 +42,29 @@ log() {
     esac
 }
 
+# ==================== 工具函数 ====================
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+confirm_action() {
+    local message=$1
+    local default=${2:-"n"}
+    
+    if [[ "$default" == "y" ]]; then
+        echo -ne "${YELLOW}$message [Y/n]: ${NC}"
+        read response
+        response=${response:-y}
+    else
+        echo -ne "${YELLOW}$message [y/N]: ${NC}"
+        read response
+        response=${response:-n}
+    fi
+    
+    [[ "$response" =~ ^[Yy]$ ]]
+}
+
+# ==================== 初始化函数 ====================
 _init() {
     log "INFO" "执行初始化流程..."
     for dir in "$ROOT_DIR" "$SERVER_DIR" "$JDK_DIR"; do
@@ -30,7 +73,6 @@ _init() {
             log "INFO" "创建目录: $dir"
         fi
     done
-
 
     log "INFO" "检查并安装依赖包..."
     
@@ -49,7 +91,7 @@ _init() {
     log "INFO" "更新包索引..."
     apt update && apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
-    local required_packages=("curl" "tar" "wget" "unzip" "git" "libandroid-shmem" "libandroid-spawn" "freetype")
+    local required_packages=("curl" "tar" "wget" "unzip" "git" "jq" "libandroid-shmem" "libandroid-spawn" "freetype")
     local missing_packages=()
     
     # 检查缺失的包
@@ -66,17 +108,15 @@ _init() {
         log "INFO" "安装缺失的包: ${missing_packages[*]}"
         for package in "${missing_packages[@]}"; do
             log "INFO" "正在安装 $package..."
-            apt install -y "$package" || { log "WARN" "重新尝试安装 $package"; apt install -y "$package" || log "ERROR" "无法安装 $package"; }
+            apt install -y "$package" || log "ERROR" "无法安装 $package"
         done
     fi
-
 
     echo "$init_VERSION" > "$LOCK_FILE"
     log "INFO" "初始化完成，版本 $init_VERSION"
     init_lock=true
     sleep 1
 }
-
 
 check_init() {
     log "INFO" "初始化检查..."
@@ -99,6 +139,7 @@ check_init() {
     sleep 1
 }
 
+# ==================== 下载函数 ====================
 download_file() {
     local url="$1"
     local dest="$2"
@@ -118,12 +159,277 @@ download_file() {
     return 0
 }
 
+# ==================== 服务器相关函数 ====================
 get_server_list() {
     SERVER_LIST=()
     if [ -d "$SERVER_DIR" ]; then
         for dir in "$SERVER_DIR"/*/; do
             [ -d "$dir" ] && SERVER_LIST+=("$(basename "$dir")")
         done
+    fi
+}
+
+create_server_files() {
+    local server_path=$1
+    local jar_name=$2
+    local java_version=${3:-17}
+    
+    log "INFO" "创建服务器配置文件..."
+    
+    # 创建 eula.txt
+    cat > "$server_path/eula.txt" << EOF
+eula=true
+EOF
+    log "INFO" "已创建 eula.txt (EULA已自动同意)"
+    
+    # 创建启动脚本
+    cat > "$server_path/start.sh" << EOF
+#!/bin/bash
+JAVA_PATH="$JDK_DIR/JDK$java_version/bin/java"
+
+# 检查 Java 是否存在
+if [ ! -f "\$JAVA_PATH" ]; then
+    echo "错误: Java 未找到，请先安装 JDK $java_version"
+    exit 1
+fi
+
+# 服务器参数
+MIN_RAM="2G"
+MAX_RAM="2G"
+JAR_FILE="$jar_name"
+
+# 启动服务器
+echo "正在启动 Minecraft 服务器..."
+echo "Java 版本: \$(\$JAVA_PATH -version 2>&1 | head -n 1)"
+echo "RAM: \$MIN_RAM - \$MAX_RAM"
+echo "JAR: \$JAR_FILE"
+echo "-----------------------------------"
+
+\$JAVA_PATH -Xms\$MIN_RAM -Xmx\$MAX_RAM -jar "\$JAR_FILE" nogui
+EOF
+    
+    chmod +x "$server_path/start.sh"
+    log "INFO" "已创建启动脚本: $server_path/start.sh"
+    
+    echo ""
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}✓ 服务器安装完成!${NC}"
+    echo -e "${CYAN}服务器路径:${NC} $server_path"
+    echo -e "${CYAN}JAR 文件:${NC} $jar_name"
+    echo -e "${CYAN}Java 版本:${NC} JDK $java_version"
+    echo -e "${CYAN}启动命令:${NC} cd $server_path && ./start.sh"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    
+    if confirm_action "是否现在启动服务器?" "n"; then
+        cd "$server_path"
+        ./start.sh
+    fi
+}
+
+get_fabric() {
+    STEP_PATH="新建 > 模组服 > Fabric"
+
+    local URL="https://meta.fabricmc.net/v2/versions"
+    local GAME=$URL/game
+    local LOADER=$URL/loader
+    local INSTALLER=$URL/installer
+
+    # 1. 获取数据
+    log "INFO" "正在从 Fabric Meta 获取版本数据..."
+    local game_data=$(curl -s "$GAME")
+    local loader_data=$(curl -s "$LOADER")
+    local installer_data=$(curl -s "$INSTALLER")
+    local fabric_versions=()
+
+    # 2. 解析数据
+    if command_exists jq; then
+        log "INFO" "使用 jq 解析 JSON 数据"
+        fabric_versions=($(echo "$game_data" | jq -r '.[] | select(.stable==true) | .version'))
+        latest_loader=$(echo "$loader_data" | jq -r '[.[] | select(.stable==true)][0].version')
+        installer_version=$(echo "$installer_data" | jq -r '[.[] | select(.stable==true)][0].version')
+    else
+        log "WARN" "未检测到 jq"
+        return 1
+    fi
+
+    # 验证数据是否获取成功
+    if [[ ${#fabric_versions[@]} -eq 0 ]]; then
+        log "ERROR" "未能获取 Fabric 版本列表"
+        return 1
+    fi
+    
+    if [[ -z "$latest_loader" ]]; then
+        log "ERROR" "未能获取 Loader 版本"
+        return 1
+    fi
+    
+    if [[ -z "$installer_version" ]]; then
+        log "ERROR" "未能获取 Installer 版本"
+        return 1
+    fi
+
+    log "INFO" "最新 Loader: $latest_loader, Installer: $installer_version"
+
+    # 3. 选择版本
+    menu_selector "请选择 Fabric 版本" 1 "false" "${fabric_versions[@]}"
+    local res=$?
+
+    if [[ $res -eq 0 ]]; then
+        step="SERVER_MOD"
+        return 0
+    elif [[ $res -eq 255 ]]; then
+        log "ERROR" "无效输入"
+        return 1
+    fi
+
+    local selected_game_version="${fabric_versions[$((res-1))]}"
+    log "INFO" "已选择版本: $selected_game_version (Loader: $latest_loader)"
+
+    local download_url="https://meta.fabricmc.net/v2/versions/loader/${selected_game_version}/${latest_loader}/${installer_version}/server/jar"
+
+    if ! confirm_action "确认下载并安装 Fabric $selected_game_version?" "y"; then
+        log "INFO" "用户取消安装"
+        step="SERVER_MOD"
+        return 0
+    fi
+
+    log "INFO" "开始下载服务端 JAR..."
+    log "INFO" "下载链接: $download_url"
+    
+    local server_name="fabric-${selected_game_version}"
+    local server_path="$SERVER_DIR/$server_name"
+    local jar_name="fabric-server-${selected_game_version}.jar"
+    
+    mkdir -p "$server_path"
+    download_file "$download_url" "$server_path/$jar_name"
+    
+    if [ $? -eq 0 ]; then
+        log "INFO" "选择服务器使用的 JDK 版本..."
+        select_jdk_version 21
+        
+        if [ $? -eq 0 ] && [ -n "$SELECTED_JDK_VERSION" ]; then
+            create_server_files "$server_path" "$jar_name" "$SELECTED_JDK_VERSION"
+            step="SERVER"
+        else
+            log "ERROR" "未选择 JDK，服务器创建未完成"
+            log "INFO" "您可以手动在 $server_path 中配置"
+            sleep 3
+            step="SERVER"
+        fi
+    else
+        log "ERROR" "下载失败,请检查网络。"
+        sleep 2
+    fi
+}
+
+# ==================== JDK 相关函数 ====================
+# 让用户选择 JDK 版本（结果保存在全局变量 SELECTED_JDK_VERSION）
+select_jdk_version() {
+    local recommended_version=${1:-21}
+    local available_jdks=()
+    local jdk_options=()
+    
+    SELECTED_JDK_VERSION=""  # 清空全局变量
+    
+    # 检查已安装的 JDK
+    for ver in "${JDK_LIST[@]}"; do
+        if [ -d "$JDK_DIR/JDK$ver" ] && check_jdk $ver; then
+            available_jdks+=("$ver")
+            if [ "$ver" -eq "$recommended_version" ]; then
+                jdk_options+=("JDK $ver ${GREEN}(推荐)${NC}")
+            else
+                jdk_options+=("JDK $ver")
+            fi
+        fi
+    done
+    
+    # 如果没有可用的 JDK
+    if [ ${#available_jdks[@]} -eq 0 ]; then
+        log "WARN" "未检测到已安装的 JDK"
+        if confirm_action "是否安装推荐的 JDK $recommended_version?" "y"; then
+            install_jdk "$recommended_version"
+            if check_jdk "$recommended_version"; then
+                SELECTED_JDK_VERSION="$recommended_version"
+                return 0
+            else
+                log "ERROR" "JDK 安装失败"
+                return 1
+            fi
+        else
+            return 1
+        fi
+    fi
+    
+    # 如果只有一个可用的 JDK
+    if [ ${#available_jdks[@]} -eq 1 ]; then
+        local only_jdk="${available_jdks[0]}"
+        log "INFO" "检测到 JDK $only_jdk，将使用此版本"
+        SELECTED_JDK_VERSION="$only_jdk"
+        return 0
+    fi
+    
+    # 多个 JDK 可选，让用户选择
+    local saved_path="$STEP_PATH"
+    STEP_PATH="$saved_path > 选择 JDK"
+    jdk_options+=("${YELLOW}安装其他版本${NC}")
+    
+    menu_selector "选择服务器使用的 JDK 版本" 1 "false" "${jdk_options[@]}"
+    local res=$?
+    
+    if [[ $res -eq 0 ]]; then
+        STEP_PATH="$saved_path"
+        return 1  # 用户取消
+    elif [[ $res -eq ${#jdk_options[@]} ]]; then
+        # 用户选择安装其他版本
+        STEP_PATH="$saved_path > 选择 JDK > 安装 JDK"
+        local install_options=()
+        for ver in "${JDK_LIST[@]}"; do
+            if [[ ! " ${available_jdks[@]} " =~ " ${ver} " ]]; then
+                install_options+=("JDK $ver")
+            fi
+        done
+        
+        if [ ${#install_options[@]} -eq 0 ]; then
+            log "INFO" "所有 JDK 版本都已安装"
+            STEP_PATH="$saved_path"
+            sleep 2
+            return 1
+        fi
+        
+        menu_selector "选择要安装的 JDK 版本" 1 "false" "${install_options[@]}"
+        local install_res=$?
+        
+        if [[ $install_res -eq 0 ]]; then
+            STEP_PATH="$saved_path"
+            return 1
+        fi
+        
+        # 找出未安装的 JDK 列表中的对应版本
+        local unavailable_jdks=()
+        for ver in "${JDK_LIST[@]}"; do
+            if [[ ! " ${available_jdks[@]} " =~ " ${ver} " ]]; then
+                unavailable_jdks+=("$ver")
+            fi
+        done
+        
+        local selected_ver="${unavailable_jdks[$((install_res-1))]}"
+        STEP_PATH="$saved_path"
+        install_jdk "$selected_ver"
+        
+        if check_jdk "$selected_ver"; then
+            SELECTED_JDK_VERSION="$selected_ver"
+            return 0
+        else
+            return 1
+        fi
+    else
+        # 用户选择已有的 JDK
+        local selected_jdk="${available_jdks[$((res-1))]}"
+        log "INFO" "已选择 JDK $selected_jdk"
+        STEP_PATH="$saved_path"
+        SELECTED_JDK_VERSION="$selected_jdk"
+        return 0
     fi
 }
 
@@ -137,20 +443,69 @@ install_jdk() {
         log "INFO" "JDK $tag 已安装"
         if check_jdk $tag; then
             log "INFO" "JDK $tag 可用，跳过安装"
+            
+            echo -e "${CYAN}安装路径:${NC} $JDK_DIR/JDK$tag"
+            "$JDK_DIR/JDK$tag/bin/java" -version 2>&1 | head -n 1
+            sleep 2
             return 0
         else
             log "WARN" "JDK $tag 安装损坏，重新安装"
+            
+            if ! confirm_action "检测到 JDK $tag 已损坏，是否重新安装?" "y"; then
+                return 1
+            fi
+            
             rm -rf "$JDK_DIR/JDK$tag"
         fi
     fi
 
+    if ! confirm_action "确认安装 JDK $tag?" "y"; then
+        log "INFO" "用户取消安装"
+        return 0
+    fi
+
     download_file "$URL"/jdk"$tag".tar.gz "$JDK_DIR/$tag.tar.gz"
 
+    log "INFO" "正在解压 JDK $tag..."
     tar -xzf "$JDK_DIR/$tag.tar.gz" -C "$JDK_DIR"
     mv "$JDK_DIR/java-$tag-openjdk/" "$JDK_DIR/JDK$tag/"
 
     rm "$JDK_DIR/$tag.tar.gz"
-    log "INFO" "JDK $tag 安装完成"
+    
+    if check_jdk $tag; then
+        log "INFO" "JDK $tag 安装完成"
+        echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${GREEN}✓ JDK $tag 安装成功!${NC}"
+        echo -e "${CYAN}安装路径:${NC} $JDK_DIR/JDK$tag"
+        "$JDK_DIR/JDK$tag/bin/java" -version 2>&1 | head -n 3
+        echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        sleep 3
+    else
+        log "ERROR" "JDK $tag 安装失败，无法执行"
+        return 1
+    fi
+}
+
+uninstall_jdk() {
+    local tag=$1
+    
+    if [ ! -d "$JDK_DIR/JDK$tag" ]; then
+        log "WARN" "JDK $tag 未安装"
+        sleep 2
+        return 1
+    fi
+    
+    echo -e "${RED}警告: 即将删除 JDK $tag${NC}"
+    echo -e "${CYAN}路径:${NC} $JDK_DIR/JDK$tag"
+    
+    if confirm_action "确认删除 JDK $tag?" "n"; then
+        rm -rf "$JDK_DIR/JDK$tag"
+        log "INFO" "JDK $tag 已卸载"
+        sleep 2
+    else
+        log "INFO" "取消卸载"
+        sleep 1
+    fi
 }
 
 check_jdk() {
@@ -163,6 +518,7 @@ check_jdk() {
     fi
 }
 
+# ==================== UI 相关函数 ====================
 show_banner() {
     clear
     local R='\033[1;31m'
@@ -186,6 +542,10 @@ show_banner() {
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
+navigate_to() {
+    step=$1
+}
+
 menu_selector() {
     local title=$1
     local default_idx=$2
@@ -198,8 +558,7 @@ menu_selector() {
     echo -e "${PURPLE}>> $title${NC}"
     for i in "${!options[@]}"; do
         local idx=$((i+1))
-        local suffix=""
-        echo -e "${GREEN}$idx)${NC} ${options[$i]}$suffix"
+        echo -e "${GREEN}$idx)${NC} ${options[$i]}"
     done
     echo -e "---------------------------------------------"
     echo -e "${RED}0)${NC} $exit_label"
@@ -209,23 +568,47 @@ menu_selector() {
     return 255
 }
 
+manage_server() {
+    local server_name=$1
+    local server_path="$SERVER_DIR/$server_name"
+    
+    while true; do
+        STEP_PATH="主菜单 > 服务器 > $server_name"
+        local list=("启动服务器" "查看文件" "删除服务器")
+        menu_selector "服务器管理" 1 "false" "${list[@]}"
+        
+        case $? in
+            0) break ;;
+            1)
+                if [ -f "$server_path/start.sh" ]; then
+                    cd "$server_path"
+                    ./start.sh
+                else
+                    log "ERROR" "启动脚本不存在"
+                    sleep 2
+                fi
+                ;;
+            2)
+                log "INFO" "服务器路径: $server_path"
+                ls -lh "$server_path"
+                read -p "按 Enter 继续..."
+                ;;
+            3)
+                echo -e "${RED}警告: 即将删除服务器 $server_name${NC}"
+                if confirm_action "确认删除?" "n"; then
+                    rm -rf "$server_path"
+                    log "INFO" "服务器已删除"
+                    sleep 2
+                    break
+                fi
+                ;;
+            *) log "ERROR" "无效输入"; sleep 1 ;;
+        esac
+    done
+}
+
+# ==================== 主函数 ====================
 main() {
-    # 颜色定义    
-    NC='\033[0m'
-    RED='\033[1;31m'
-    GREEN='\033[1;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[1;34m'
-    PURPLE='\033[1;35m'
-    CYAN='\033[1;96m'
-    
-    red_bg='\033[41m'
-    blue_bg='\033[44m'
-    yellow_bg='\033[43m'
-    
-    blue_fg_strong='\033[1;94m'
-    yellow_fg_strong='\033[1;93m'
-    red_fg_strong='\033[1;91m'
     check_init
     
     local step="MAIN"
@@ -233,15 +616,23 @@ main() {
         case $step in
             "MAIN")
                 STEP_PATH="主菜单"
-                local list=("服务器" "JDK 安装" "更新脚本" "关于脚本")
+                local list=("服务器" "JDK 管理" "更新脚本" "关于脚本")
                 menu_selector "请选择操作" 1 "true" "${list[@]}"
                 case $? in
                     0) exit 0 ;;
-                    1) step="SERVER" ;;
-                    2) step="JDK_VENDOR" ;;
+                    1) navigate_to "SERVER" ;;
+                    2) navigate_to "JDK_VENDOR" ;;
                     3) log "INFO" "功能开发中..."; sleep 1 ;;
-                    4) log "INFO" "By 东经雨"; sleep 2 ;;
-                    *) log "ERROR" "无效输入" ;;
+                    4) 
+                        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                        echo -e "${PURPLE}MCST - Minecraft Server Tool${NC}"
+                        echo -e "${BLUE}版本:${NC} $init_VERSION"
+                        echo -e "${BLUE}作者:${NC} 东经雨"
+                        echo -e "${BLUE}架构:${NC} $ARCH"
+                        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                        read -p "按 Enter 继续..."
+                        ;;
+                    *) log "ERROR" "无效输入"; sleep 1 ;;
                 esac
                 ;;
             "SERVER")
@@ -251,75 +642,114 @@ main() {
                 for server in "${SERVER_LIST[@]}"; do
                     list+=("$server")
                 done
-                local list+=("$YELLOW新建$NC")
+                list+=("${YELLOW}新建服务器${NC}")
                 menu_selector "选择操作" ${#list[@]} "false" "${list[@]}"
-                case $? in
-                    ${#list[@]}) step="SERVER_TYPE" ;;
-                    0) step="MAIN" ;;
-                    *) log "ERROR" "无效输入" ;;
+                local res=$?
+                case $res in
+                    ${#list[@]}) navigate_to "SERVER_TYPE" ;;
+                    0) navigate_to "MAIN" ;;
+                    *)
+                        if [[ $res -ge 1 && $res -lt ${#list[@]} ]]; then
+                            manage_server "${SERVER_LIST[$((res-1))]}"
+                        else
+                            log "ERROR" "无效输入"; sleep 1
+                        fi
+                        ;;
                 esac
                 ;;
             "SERVER_TYPE")
                 STEP_PATH="主菜单 > 服务器 > 新建"
-                local list=("模组服 (Mod)" "插件服 (Plugin)" )
+                local list=("模组服 (Mod)" "插件服 (Plugin)")
                 menu_selector "选择服务器类型" 1 "false" "${list[@]}"
                 case $? in
-                    0) step="MAIN" ;;
-                    1) step="SERVER_MOD" ;;
-                    2) step="SERVER_PLUGIN" ;;
+                    0) navigate_to "SERVER" ;;
+                    1) navigate_to "SERVER_MOD" ;;
+                    2) navigate_to "SERVER_PLUGIN" ;;
+                    *) log "ERROR" "无效输入"; sleep 1 ;;
                 esac
                 ;;
             "SERVER_MOD")
-                STEP_PATH="服务器 > 新建 > 模组服"
+                STEP_PATH="主菜单 > 服务器 > 新建 > 模组服"
                 local list=("Fabric" "Forge" "NeoForge")
                 menu_selector "选择模组核心" 1 "false" "${list[@]}"
-                local res=$?
-                if [[ $res -eq 0 ]]; then step="SERVER_TYPE"; else
-                    log "INFO" "已选择模组核心: ${list[$((res-1))]}"
-                    sleep 1
-                fi
+                case $? in
+                    0) navigate_to "SERVER_TYPE" ;;
+                    1) get_fabric ;;
+                    2) log "INFO" "功能开发中..."; sleep 1 ;;
+                    3) log "INFO" "功能开发中..."; sleep 1 ;;
+                    *) log "ERROR" "无效输入"; sleep 1 ;;
+                esac
                 ;;
             "SERVER_PLUGIN")
-                STEP_PATH="服务器 > 新建 > 插件服"
+                STEP_PATH="主菜单 > 服务器 > 新建 > 插件服"
                 local plugin_list=("Purpur" "Paper")
                 menu_selector "选择插件核心" 1 "false" "${plugin_list[@]}"
                 local res=$?
-                if [[ $res -eq 0 ]]; then step="SERVER_TYPE"; else
+                if [[ $res -eq 0 ]]; then 
+                    navigate_to "SERVER_TYPE"
+                else
                     log "INFO" "已选择插件核心: ${plugin_list[$((res-1))]}"
-                    sleep 1
+                    log "INFO" "功能开发中..."
+                    sleep 2
                 fi
                 ;;
             "JDK_VENDOR")
-                STEP_PATH="主菜单 > JDK"
+                STEP_PATH="主菜单 > JDK 管理"
                 local list=()
                 
                 for ver in "${JDK_LIST[@]}"; do
                     if [ -d "$JDK_DIR/JDK$ver" ]; then
                         if check_jdk $ver; then
-                            list+=("JDK $ver (LTS) - $GREEN可用$NC")
+                            list+=("JDK $ver (LTS) - ${GREEN}可用${NC}")
                         else
-                            list+=("JDK $ver (LTS) - $RED不可用$NC")
+                            list+=("JDK $ver (LTS) - ${RED}不可用${NC}")
                         fi
                     else
-                        list+=("JDK $ver (LTS) - $YELLOW未安装$NC")
+                        list+=("JDK $ver (LTS) - ${YELLOW}未安装${NC}")
                     fi
                 done
 
-                menu_selector "选择版本" 0 "false" "${list[@]}"
+                menu_selector "选择 JDK 版本" 0 "false" "${list[@]}"
                 local res=$?
                 
                 if [[ $res -eq 0 ]]; then 
-                    step="MAIN"
-                elif [[ $res -ge 1 && $res -le ${#versions[@]} ]]; then  # 动态检查数组大小
-                    local ver=${versions[$((res-1))]}
-                    install_jdk "$ver"
+                    navigate_to "MAIN"
+                elif [[ $res -ge 1 && $res -le ${#JDK_LIST[@]} ]]; then
+                    local ver=${JDK_LIST[$((res-1))]}
+                    
+                    # 如果已安装，显示管理选项
+                    if [ -d "$JDK_DIR/JDK$ver" ]; then
+                        STEP_PATH="主菜单 > JDK 管理 > JDK $ver"
+                        local jdk_actions=("查看信息" "重新安装" "卸载")
+                        menu_selector "JDK $ver 管理" 1 "false" "${jdk_actions[@]}"
+                        case $? in
+                            0) ;; # 返回
+                            1)
+                                echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                                echo -e "${BLUE}JDK 版本:${NC} $ver"
+                                echo -e "${BLUE}安装路径:${NC} $JDK_DIR/JDK$ver"
+                                if check_jdk $ver; then
+                                    echo -e "${BLUE}状态:${NC} ${GREEN}可用${NC}"
+                                    "$JDK_DIR/JDK$ver/bin/java" -version 2>&1 | head -n 3
+                                else
+                                    echo -e "${BLUE}状态:${NC} ${RED}不可用${NC}"
+                                fi
+                                echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                                read -p "按 Enter 继续..."
+                                ;;
+                            2) install_jdk "$ver" ;;
+                            3) uninstall_jdk "$ver" ;;
+                            *) log "ERROR" "无效输入"; sleep 1 ;;
+                        esac
+                    else
+                        install_jdk "$ver"
+                    fi
                 else
                     log "ERROR" "无效的菜单选择: $res"
-                    step="MAIN"
                 fi
                 ;;
-                *)
-                step="MAIN"
+            *)
+                navigate_to "MAIN"
                 ;;
         esac
     done
