@@ -6,6 +6,7 @@ SERVER_DIR="$ROOT_DIR/Servers"
 JDK_DIR="$ROOT_DIR/JDKs"
 JDK_LIST=(25 21 17 11)
 ARCH=$(uname -m)
+BASH=$(command -v bash)
 
 init_lock=false
 init_VERSION="1.0.0"
@@ -70,46 +71,58 @@ _init() {
     for dir in "$ROOT_DIR" "$SERVER_DIR" "$JDK_DIR"; do
         if [ ! -d "$dir" ]; then
             mkdir -p "$dir"
-            log "INFO" "创建目录: $dir"
         fi
     done
 
-    log "INFO" "检查并安装依赖包..."
-    
-    # 备份原始 sources.list
-    if [ ! -f "$PREFIX/etc/apt/sources.list.bak" ]; then
-        cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
-    fi
-    
-    # 更新源到清华镜像
-    if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
-        log "INFO" "更新软件源到清华镜像..."
-        sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
-    fi
-    
-    # 更新包索引
-    log "INFO" "更新包索引..."
-    apt update && apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
-
-    local required_packages=("curl" "tar" "wget" "unzip" "git" "jq" "libandroid-shmem" "libandroid-spawn" "freetype")
-    local missing_packages=()
-    
-    # 检查缺失的包
-    for package in "${required_packages[@]}"; do
-        if ! command_exists "$package"; then
-            missing_packages+=("$package")
-        else
-            log "INFO" "$package 已就绪"
+    if [[ "$BASH" == */com.termux/* ]]; then
+        log "INFO" "Termux:检查并安装依赖包..."
+        
+        # 备份原始 sources.list
+        if [ ! -f "$PREFIX/etc/apt/sources.list.bak" ]; then
+            cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
         fi
-    done
+        
+        # 更新源到清华镜像
+        if ! grep -q "mirrors.tuna.tsinghua.edu.cn" "$PREFIX/etc/apt/sources.list"; then
+            log "INFO" "更新软件源到清华镜像..."
+            sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main stable main@' $PREFIX/etc/apt/sources.list
+        fi
+        
+        # 更新包索引
+        log "INFO" "更新包索引..."
+        apt update && apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
-    # 安装缺失的包
-    if [ ${#missing_packages[@]} -gt 0 ]; then
-        log "INFO" "安装缺失的包: ${missing_packages[*]}"
-        for package in "${missing_packages[@]}"; do
-            log "INFO" "正在安装 $package..."
-            apt install -y "$package" || log "ERROR" "无法安装 $package"
+        local required_packages=("curl" "tar" "wget" "unzip" "git" "jq" "libandroid-shmem" "libandroid-spawn" "freetype")
+        local missing_packages=()
+        
+        # 检查缺失的包
+        for package in "${required_packages[@]}"; do
+            if ! command_exists "$package"; then
+                missing_packages+=("$package")
+            else
+                log "INFO" "$package 已就绪"
+            fi
         done
+
+        # 安装缺失的包
+        if [ ${#missing_packages[@]} -gt 0 ]; then
+            log "INFO" "安装缺失的包: ${missing_packages[*]}"
+            for package in "${missing_packages[@]}"; do
+                log "INFO" "正在安装 $package..."
+                apt install -y "$package" || log "ERROR" "无法安装 $package"
+            done
+        fi
+    elif [[ "$BASH" == */bin.mt.plus/* ]]; then
+        log "ERROR" "不支持MT扩展包"
+        log "WARN" "正在删除MCST目录..."
+        rm -rf "$ROOT_DIR"
+        log "ERROR" "请使用Termux运行"
+        exit 1
+    elif [[ "$BASH" == */bin/bash ]]; then 
+        log "ERROR" "未知bash"
+    else
+        log "ERROR" "不支持的运行环境"
+        exit 1
     fi
 
     echo "$init_VERSION" > "$LOCK_FILE"
@@ -124,6 +137,7 @@ check_init() {
         log "ERROR" "不支持的架构: ${ARCH} (仅支持 aarch64)"
         exit 1
     fi
+
     if [ ! -f "$LOCK_FILE" ];then
         _init
     else
@@ -539,6 +553,7 @@ show_banner() {
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${BLUE}当前位置: ${YELLOW}${STEP_PATH:-主菜单}${NC}"
     echo -e "${BLUE}架构信息: ${PURPLE}$ARCH${NC}"
+    echo -e "${BLUE}${PURPLE}${BASH}${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
