@@ -4,8 +4,10 @@
 ROOT_DIR="$HOME/.MCST"
 SERVER_DIR="$ROOT_DIR/Servers"
 JDK_DIR="$ROOT_DIR/JDKs"
+
 JDK_LIST=(25 21 17 11)
 ARCH=$(uname -m)
+WHOAMI=$(whoami)
 BASH=$(command -v bash)
 
 init_lock=false
@@ -68,15 +70,9 @@ confirm_action() {
 # ==================== 初始化函数 ====================
 _init() {
     log "INFO" "执行初始化流程..."
-    for dir in "$ROOT_DIR" "$SERVER_DIR" "$JDK_DIR"; do
-        if [ ! -d "$dir" ]; then
-            mkdir -p "$dir"
-        fi
-    done
 
     if [[ "$BASH" == */com.termux/* ]]; then
-        log "INFO" "Termux:检查并安装依赖包..."
-        
+        log "INFO" "当前环境:Termux..."
         # 备份原始 sources.list
         if [ ! -f "$PREFIX/etc/apt/sources.list.bak" ]; then
             cp "$PREFIX/etc/apt/sources.list" "$PREFIX/etc/apt/sources.list.bak"
@@ -113,13 +109,22 @@ _init() {
             done
         fi
     elif [[ "$BASH" == */bin.mt.plus/* ]]; then
-        log "ERROR" "不支持MT扩展包"
-        log "WARN" "正在删除MCST目录..."
-        rm -rf "$ROOT_DIR"
-        log "ERROR" "请使用Termux运行"
-        exit 1
+        log "WARN" "MT扩展包:可能会有未知的问题..."
+
+        if [ "$WHOAMI" != "root" ]; then
+            log "ERROR" "请以 root 用户运行脚本"
+            exit 1
+        fi
+        log "INFO" "检查并安装 jq..."
+
+        if ! command_exists "jq"; then
+            log "INFO" "jq 未检测到，正在安装..."
+            download_file "https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-arm64" "$PREFIX/bin/jq"
+            chmod +x "$PREFIX/bin/jq"
+        fi
     elif [[ "$BASH" == */bin/bash ]]; then 
         log "ERROR" "未知bash"
+        exit 1
     else
         log "ERROR" "不支持的运行环境"
         exit 1
@@ -140,6 +145,11 @@ check_init() {
 
     if [ ! -f "$LOCK_FILE" ];then
         _init
+        for dir in "$ROOT_DIR" "$SERVER_DIR" "$JDK_DIR"; do
+            if [ ! -d "$dir" ]; then
+                mkdir -p "$dir"
+            fi
+        done
     else
         local stored_version=$(cat "$LOCK_FILE" 2>/dev/null)
         if [ "$stored_version" != "$init_VERSION" ]; then
@@ -166,10 +176,10 @@ download_file() {
     log "INFO" "下载文件: $url"
     wget -q --show-progress -O "$dest" "$url"
     if [ $? -ne 0 ]; then
-        log "ERROR" "下载失败: $url"
+        log "ERROR" "下载失败"
         return 1
     fi
-    log "INFO" "下载完成: $dest"
+    log "INFO" "下载完成"
     return 0
 }
 
@@ -309,7 +319,6 @@ get_fabric() {
     fi
 
     log "INFO" "开始下载服务端 JAR..."
-    log "INFO" "下载链接: $download_url"
     
     local server_name="fabric-${selected_game_version}"
     local server_path="$SERVER_DIR/$server_name"

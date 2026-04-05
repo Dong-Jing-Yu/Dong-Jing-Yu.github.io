@@ -270,15 +270,11 @@ function verify_sha() {
         FILE_NAME=$(basename "$IMAGE_NAME")
         log "INFO" "提取文件名: $FILE_NAME"
 
-        # 构造匹配模式（移除日期）
-        # 例如：kali-nethunter-rootfs-minimal-arm64.tar.xz → kali-nethunter-*-rootfs-minimal-arm64.tar.xz
-        MATCH_PATTERN=$(echo "$FILE_NAME" | sed 's/kali-nethunter-/kali-nethunter-[0-9.]*-/')
-
-        # 提取哈希值（用 grep 正则匹配）
-        EXPECTED_HASH=$(grep -E " ${MATCH_PATTERN}$" SHA256SUMS | awk '{print $1}')
+        # 更通用的匹配模式
+        EXPECTED_HASH=$(grep "${wimg}-${SYS_ARCH}\.tar\.xz$" SHA256SUMS | awk '{print $1}')
 
         if [ -z "$EXPECTED_HASH" ]; then
-            error_exit "无法从 SHA256SUMS 中找到对应的哈希值 (模式: $MATCH_PATTERN)"
+            error_exit "无法从 SHA256SUMS 中找到对应的哈希值"
         fi
 
         log "INFO" "计算 SHA-256 哈希值..."
