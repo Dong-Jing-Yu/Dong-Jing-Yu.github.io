@@ -43,9 +43,7 @@ function unsupported_arch() {
 }
 
 function ask() {
-    # http://djm.me/ask
     while true; do
-
         if [ "${2:-}" = "Y" ]; then
             prompt="Y/n"
             default=Y
@@ -57,18 +55,15 @@ function ask() {
             default=
         fi
 
-        # Ask the question
         printf "${light_cyan}\n[?] "
         read -p "$1 [$prompt] " REPLY
 
-        # Default?
         if [ -z "$REPLY" ]; then
             REPLY=$default
         fi
 
         printf "${reset}"
 
-        # Check if the reply is valid
         case "$REPLY" in
             Y*|y*) return 0 ;;
             N*|n*) return 1 ;;
@@ -183,7 +178,7 @@ function check_dependencies() {
     log "INFO" "更新包索引..."
     apt update -y &>/dev/null || retry_
 
-    local required_packages=("proot" "tar" "wget" "xz")
+    local required_packages=("proot" "tar" "wget" "axel" "xz-utils")
     local missing_packages=()
     
     # 检查缺失的包
@@ -194,12 +189,6 @@ function check_dependencies() {
             log "INFO" "$package 已就绪"
         fi
     done
-    # 单独检查 aria2
-    if ! command_exists "aria2c"; then
-        missing_packages+=("aria2")
-    else
-        log "INFO" "aria2 已就绪"
-    fi
 
     # 安装缺失的包
     if [ ${#missing_packages[@]} -gt 0 ]; then
@@ -229,12 +218,12 @@ function get_rootfs() {
     
     log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    if ask "是否使用多线程(aria2c)" "Y"; then
-        if command_exists aria2c; then
-            log "INFO" "使用 aria2c 多线程下载: ${ROOTFS_URL}"
-            aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}" || error_exit "下载失败"
+    if ask "是否使用多线程(axel)" "Y"; then
+        if command_exists axel; then
+            log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
+            axel -n 16 "${ROOTFS_URL}" || error_exit "下载失败"
         else
-            log "WARN" "未发现aria2c使用wget下载: ${ROOTFS_URL}"
+            log "WARN" "未发现axel使用wget下载: ${ROOTFS_URL}"
             wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
                 if [[ "$line" == *%* ]]; then
                     echo -ne "\r${blue}[下载]${reset} $line"
@@ -285,6 +274,7 @@ function verify_sha() {
 
         if [ "$EXPECTED_HASH" = "$ACTUAL_HASH" ]; then
             log "SUCCESS" "Rootfs SHA-256 哈希验证通过"
+            rm -f SHA256SUMS
             return 0
         else
             error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
@@ -322,15 +312,11 @@ function create_launcher() {
     cat > "$NH_LAUNCHER" <<- EOF
 #!/data/data/com.termux/files/usr/bin/bash -e
 cd \${HOME}
-# 取消设置 termux-exec 的 LD_PRELOAD
 unset LD_PRELOAD
-
-# Libreoffice 的临时解决方案
 if [ ! -f $CHROOT/root/.version ]; then
     touch $CHROOT/root/.version
 fi
 
-# 默认配置
 user="$USERNAME"
 home="/home/\$user"
 start="sudo -u kali /bin/bash"
@@ -341,7 +327,6 @@ else
     KALIUSR="0";
 fi
 
-# 检查命令行参数
 if [[ \$KALIUSR == "0" || ("\$#" != "0" && ("\$1" == "-r" || "\$1" == "-R")) ]];then
     user="root"
     home="/\$user"
@@ -351,7 +336,6 @@ if [[ \$KALIUSR == "0" || ("\$#" != "0" && ("\$1" == "-r" || "\$1" == "-R")) ]];
     fi
 fi
 
-# 构建 proot 命令
 cmdline="proot \\
         --link2symlink \\
         -0 \\
@@ -391,9 +375,8 @@ EOF
 function create_kex_launcher() {
     log "INFO" "创建 KeX 启动器..."
     KEX_LAUNCHER=${CHROOT}/usr/bin/kex
-    cat > $KEX_LAUNCHER <<- EOF
+    cat > "$KEX_LAUNCHER" <<- 'EOF'
 #!/bin/bash
-
 function start-kex() {
     export LANG=zh_CN.UTF-8
     export FONTCONFIG_PATH=/etc/fonts
@@ -401,70 +384,34 @@ function start-kex() {
     if [ ! -f ~/.vnc/passwd ]; then
         passwd-kex
     fi
-    USR=\$(whoami)
-    if [ \$USR == "root" ]; then
-        SCREEN=":2"
-    else
-        SCREEN=":1"
-    fi 
-    export MOZ_FAKE_NO_SANDBOX=1; export HOME=\${HOME}; export USER=\${USR}; LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgcc_s.so.1 nohup vncserver \$SCREEN >/dev/null 2>&1 </dev/null
-    starting_kex=1
-    return 0
+    USR=$(whoami)
+    SCREEN=":1"
+    [ "$USR" = "root" ] && SCREEN=":2"
+    export USER="$USR"
+    vncserver "$SCREEN" -localhost no
 }
 
 function stop-kex() {
-    vncserver -kill :1 | sed s/"Xtigervnc"/"NetHunter KeX"/
-    vncserver -kill :2 | sed s/"Xtigervnc"/"NetHunter KeX"/
+    vncserver -kill :1 2>/dev/null
+    vncserver -kill :2 2>/dev/null
     rm -f /tmp/.X*-lock
     rm -f /tmp/.X11-unix/X*
-    return $?
 }
 
 function passwd-kex() {
     vncpasswd
-    return $?
 }
 
 function status-kex() {
-    sessions=\$(vncserver -list | sed s/"TigerVNC"/"NetHunter KeX"/)
-    if [[ \$sessions == *"590"* ]]; then
-        printf "\n\${sessions}\n"
-        printf "\n你可以使用 KeX 客户端连接这些显示器\n\n"
-    else
-
-        if [ ! -z \$starting_kex ]; then
-            printf '\n启动 KeX 服务器时出错。\n请尝试 "nethunter kex kill" 或重启 termux 会话并重试\n\n'
-        fi
-    fi
-    return 0
+    vncserver -list
 }
 
-function kill-kex() {
-    pkill Xtigervnc
-    return \$?
-}
-
-case \$1 in
-    start)
-        start-kex
-        ;;
-    stop)
-        stop-kex
-        ;;
-    status)
-        status-kex
-        ;;
-    passwd)
-        passwd-kex
-        ;;
-    kill)
-        kill-kex
-        ;;
-    *)
-        stop-kex
-        start-kex
-        status-kex
-        ;;
+case "$1" in
+    start) start-kex ;;
+    stop) stop-kex ;;
+    status) status-kex ;;
+    passwd) passwd-kex ;;
+    *) start-kex; status-kex ;;
 esac
 EOF
 
@@ -554,7 +501,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.5.1${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.6${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
@@ -594,6 +541,7 @@ function main() {
         log "WARN" "当前跳过SHA验证" 
     fi
     get_arch
+    log "WARN" "2026/4/19 实测kex无法使用,请等待更新" 
     set_strings
     prepare_fs
     check_dependencies
@@ -633,7 +581,6 @@ function main() {
     
     printf "${green}=== 高级选项 ===${reset}\n"
     printf "${green}[+] nethunter -r          # 以 root 身份启动${reset}\n"
-    printf "${green}[+] nethunter kex kill    # 强制停止所有 KeX 会话${reset}\n"
     echo
 }
 
