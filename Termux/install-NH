@@ -221,7 +221,7 @@ function get_rootfs() {
     if ask "是否使用多线程(axel)" "Y"; then
         if command_exists axel; then
             log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
-            axel -n 16 "${ROOTFS_URL}" || error_exit "下载失败"
+            axel -n 16 "${ROOTFS_URL}"
         else
             log "WARN" "未发现axel使用wget下载: ${ROOTFS_URL}"
             wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
@@ -241,7 +241,7 @@ function get_rootfs() {
     
     # 验证文件是否下载成功
     if [ ! -f "${IMAGE_NAME}" ]; then
-        rm -f *.tar.xz.*
+        rm -f ${IMAGE_NAME}.*
         error_exit "下载失败: ${IMAGE_NAME} 文件不存在"
     fi
     
@@ -271,13 +271,13 @@ function verify_sha() {
 
         printf "预期: %s\n" "$EXPECTED_HASH"
         printf "真实: %s\n" "$ACTUAL_HASH"
-
+        rm -f SHA256SUMS
         if [ "$EXPECTED_HASH" = "$ACTUAL_HASH" ]; then
             log "SUCCESS" "Rootfs SHA-256 哈希验证通过"
-            rm -f SHA256SUMS
             return 0
         else
             error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
+            rm -f "$IMAGE_NAME"
         fi
     else
         log "WARN" "未找到验证文件，跳过验证"
@@ -352,6 +352,7 @@ cmdline="proot \\
            LANG=C.UTF-8 \\
            \$start"
 
+
 cmd="\$@"
 if [ "\$#" == "0" ];then
     exec \$cmdline
@@ -375,12 +376,10 @@ EOF
 function create_kex_launcher() {
     log "INFO" "创建 KeX 启动器..."
     KEX_LAUNCHER=${CHROOT}/usr/bin/kex
+    mkdir -p $(dirname "$KEX_LAUNCHER")
     cat > "$KEX_LAUNCHER" <<- 'EOF'
 #!/bin/bash
 function start-kex() {
-    export LANG=zh_CN.UTF-8
-    export FONTCONFIG_PATH=/etc/fonts
-    export FONTCONFIG_FILE=/etc/fonts/fonts.conf
     if [ ! -f ~/.vnc/passwd ]; then
         passwd-kex
     fi
@@ -417,6 +416,9 @@ EOF
 
     chmod 700 $KEX_LAUNCHER
     log "SUCCESS" "KeX 启动器创建完成"
+}
+
+function fix_kex() {
 }
 
 function fix_profile_bash() {
@@ -501,7 +503,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.6${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.6.1${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
@@ -540,8 +542,8 @@ function main() {
     if [ "$no_verify" = true ]; then
         log "WARN" "当前跳过SHA验证" 
     fi
+    log "WARN" "2026/5/3 实测kex无法使用,请等待更新" 
     get_arch
-    log "WARN" "2026/4/19 实测kex无法使用,请等待更新" 
     set_strings
     prepare_fs
     check_dependencies
