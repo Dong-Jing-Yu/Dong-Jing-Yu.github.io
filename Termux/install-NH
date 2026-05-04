@@ -178,7 +178,7 @@ function check_dependencies() {
     log "INFO" "更新包索引..."
     apt update -y &>/dev/null || retry_
 
-    local required_packages=("proot" "tar" "wget" "axel" "xz-utils")
+    local required_packages=("proot" "tar" "wget" "xz-utils")
     local missing_packages=()
     
     # 检查缺失的包
@@ -189,13 +189,19 @@ function check_dependencies() {
             log "INFO" "$package 已就绪"
         fi
     done
+    # 单独检查 aria2
+    if ! command_exists "aria2c"; then
+        missing_packages+=("aria2")
+    else
+        log "INFO" "aria2 已就绪"
+    fi
 
     # 安装缺失的包
     if [ ${#missing_packages[@]} -gt 0 ]; then
         log "INFO" "安装缺失的包: ${missing_packages[*]}"
         for package in "${missing_packages[@]}"; do
             log "INFO" "正在安装 $package..."
-            apt install -y "$package" || { retry_; apt install -y "$package" || error_exit "无法安装 $package"; }
+            apt install -y "$package" || { retry_; apt install -y "$package" || log "WARN" "无法安装 $package"; }
         done
     fi
     
@@ -218,12 +224,12 @@ function get_rootfs() {
     
     log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    if ask "是否使用多线程(axel)" "Y"; then
-        if command_exists axel; then
-            log "INFO" "使用 axel 多线程下载: ${ROOTFS_URL}"
-            axel -n 16 "${ROOTFS_URL}"
+    if ask "是否使用多线程(aria2c)" "Y"; then
+        if command_exists aria2c; then
+            log "INFO" "使用 aria2c 多线程下载: ${ROOTFS_URL}"
+            aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}"
         else
-            log "WARN" "未发现axel使用wget下载: ${ROOTFS_URL}"
+            log "WARN" "未发现aria2c使用wget下载: ${ROOTFS_URL}"
             wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
                 if [[ "$line" == *%* ]]; then
                     echo -ne "\r${blue}[下载]${reset} $line"
@@ -261,7 +267,7 @@ function verify_sha() {
 
         # 更通用的匹配模式
         EXPECTED_HASH=$(grep "${wimg}-${SYS_ARCH}\.tar\.xz$" SHA256SUMS | awk '{print $1}')
-
+        rm -f SHA256SUMS
         if [ -z "$EXPECTED_HASH" ]; then
             error_exit "无法从 SHA256SUMS 中找到对应的哈希值"
         fi
@@ -271,7 +277,7 @@ function verify_sha() {
 
         printf "预期: %s\n" "$EXPECTED_HASH"
         printf "真实: %s\n" "$ACTUAL_HASH"
-        rm -f SHA256SUMS
+
         if [ "$EXPECTED_HASH" = "$ACTUAL_HASH" ]; then
             log "SUCCESS" "Rootfs SHA-256 哈希验证通过"
             return 0
@@ -419,7 +425,9 @@ EOF
 }
 
 function fix_kex() {
-}
+    log "INFO" "修复 KeX..."
+    # TODO
+} 
 
 function fix_profile_bash() {
     log "INFO" "修复 bash profile..."
@@ -503,7 +511,7 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.6.1${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.6.2${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
