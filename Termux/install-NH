@@ -178,7 +178,7 @@ function check_dependencies() {
     log "INFO" "更新包索引..."
     apt update -y &>/dev/null || retry_
 
-    local required_packages=("proot" "tar" "wget" "xz-utils")
+    local required_packages=("proot" "tar" "curl" "xz-utils")
     local missing_packages=()
     
     # 检查缺失的包
@@ -211,38 +211,21 @@ function check_dependencies() {
 
 
 function get_rootfs() {
-    unset KEEP_IMAGE
     if [ -f "${IMAGE_NAME}" ]; then
-        if ask "找到现有的 ${IMAGE_NAME} 文件。是否删除并重新下载？" "N"; then
-            rm -f "${IMAGE_NAME}" || error_exit "无法删除现有文件"
-        else
-            log "INFO" "使用现有的 rootfs 归档文件"
-            KEEP_IMAGE=1
-            return
+        if ! verify_sha; then
+            log "WARN" "已存在的 ${IMAGE_NAME} 文件验证失败，将重新下载"
+            rm -f "${IMAGE_NAME}"
         fi
     fi
     
     log "INFO" "开始下载 rootfs..."
     ROOTFS_URL="${BASE_URL}/${IMAGE_NAME}"
-    if ask "是否使用多线程(aria2c)" "Y"; then
-        if command_exists aria2c; then
-            log "INFO" "使用 aria2c 多线程下载: ${ROOTFS_URL}"
-            aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}"
-        else
-            log "WARN" "未发现aria2c使用wget下载: ${ROOTFS_URL}"
-            wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
-                if [[ "$line" == *%* ]]; then
-                    echo -ne "\r${blue}[下载]${reset} $line"
-                fi
-            done
-        fi
+    if command_exists aria2c; then
+        log "INFO" "使用 aria2c 多线程下载: ${ROOTFS_URL}"
+        aria2c -x 16 -s 16 -k 1M "${ROOTFS_URL}"
     else
-        log "INFO" "使用 wget 下载: ${ROOTFS_URL}"
-        wget -c "${ROOTFS_URL}" --progress=bar:force 2>&1 | while read -r line; do
-            if [[ "$line" == *%* ]]; then
-                echo -ne "\r${blue}[下载]${reset} $line"
-            fi
-        done
+        log "INFO" "使用 curl 下载: ${ROOTFS_URL}"
+        curl -C - -O --progress-bar "${ROOTFS_URL}"
     fi
     
     # 验证文件是否下载成功
@@ -255,19 +238,10 @@ function get_rootfs() {
 }
 
 function verify_sha() {
-    log "INFO" "开始下载 rootfs 验证文件..."
-    if command_exists wget; then
-        wget -q -c "${BASE_URL}/SHA256SUMS" -O SHA256SUMS
-    else
-        curl -O "${BASE_URL}/SHA256SUMS"
-    fi
-    if [ -f "SHA256SUMS" ]; then
-        FILE_NAME=$(basename "$IMAGE_NAME")
-        log "INFO" "提取文件名: $FILE_NAME"
+    if [ "$no_verify" = false ]; then
+        log "INFO" "验证文件..."
+        EXPECTED_HASH=$(curl -s "${BASE_URL}/SHA256SUMS" | grep -- "${wimg}-${SYS_ARCH}\.tar\.xz$" | awk '{print $1}')
 
-        # 更通用的匹配模式
-        EXPECTED_HASH=$(grep "${wimg}-${SYS_ARCH}\.tar\.xz$" SHA256SUMS | awk '{print $1}')
-        rm -f SHA256SUMS
         if [ -z "$EXPECTED_HASH" ]; then
             error_exit "无法从 SHA256SUMS 中找到对应的哈希值"
         fi
@@ -282,12 +256,13 @@ function verify_sha() {
             log "SUCCESS" "Rootfs SHA-256 哈希验证通过"
             return 0
         else
-            error_exit "Rootfs 文件已损坏或版本不匹配，请重新下载"
+            log "ERROR" "哈希不匹配"
             rm -f "$IMAGE_NAME"
+            return 1
         fi
     else
-        log "WARN" "未找到验证文件，跳过验证"
-        return 0
+        log "INFO" "跳过SHA验证"
+            return 0
     fi
 }
 
@@ -425,8 +400,8 @@ EOF
 }
 
 function fix_kex() {
-    log "INFO" "修复 KeX..."
-    # TODO
+    log "INFO" "修复 KeX... (TODO)"
+    # 
 } 
 
 function fix_profile_bash() {
@@ -511,10 +486,11 @@ function print_banner() {
     printf "${blue}##                                              ##${reset}\n"
     printf "${blue}####  ############# NetHunter ####################${reset}\n"
     printf "${blue}####  ############ (网络猎人) ####################${reset}\n"
-    printf "${blue}脚本优化: 东经雨 6.6.2${reset}\n"
+    printf "${blue}脚本优化: 东经雨 6.6.3${reset}\n"
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
+    log "WARN" "2026/5/3 kex无法使用(作者不会修)" 
 }
 
 function main() {
@@ -550,17 +526,12 @@ function main() {
     if [ "$no_verify" = true ]; then
         log "WARN" "当前跳过SHA验证" 
     fi
-    log "WARN" "2026/5/3 实测kex无法使用,请等待更新" 
     get_arch
     set_strings
     prepare_fs
     check_dependencies
     get_rootfs
-    if [ "$no_verify" = false ]; then
-        verify_sha
-    else
-        log "INFO" "跳过SHA验证"
-    fi
+    verify_sha
     extract_rootfs
     create_launcher
     cleanup
@@ -570,6 +541,7 @@ function main() {
     fix_resolv_conf
     fix_sudo
     create_kex_launcher
+    fix_kex
     fix_uid
     update_sources_list
     sleep 3
