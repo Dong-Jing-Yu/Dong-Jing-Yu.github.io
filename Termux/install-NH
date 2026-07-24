@@ -360,6 +360,11 @@ function create_kex_launcher() {
     mkdir -p $(dirname "$KEX_LAUNCHER")
     cat > "$KEX_LAUNCHER" <<- 'EOF'
 #!/bin/bash
+
+export LANG=zh_CN.UTF-8
+#export FONTCONFIG_PATH=/etc/fonts
+#export FONTCONFIG_FILE=/etc/fonts/fonts.conf
+
 function start-kex() {
     if [ ! -f ~/.vnc/passwd ]; then
         passwd-kex
@@ -490,7 +495,7 @@ function print_banner() {
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
-    log "WARN" "2026/5/3 kex无法使用(作者不会修)" 
+    log "WARN" "2026/5/3 开始${red}kex无法使用${reset}(视乎是XFCE的问题<DeepSeek,ChatGPT都是怎么说的>" 
 }
 
 function main() {
