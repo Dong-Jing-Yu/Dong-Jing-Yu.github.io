@@ -271,6 +271,7 @@ function verify_sha() {
 function extract_rootfs() {
     if [ -z "$KEEP_CHROOT" ]; then
         log "INFO" "开始解压 rootfs..."
+        log "WARN" "解压可能需要2-4分钟,请耐心等待,在此期间请将Termux${red}保持前台${reset}..."
 
         # 使用 xz 解压并显示进度，替代 pv
         xz -dc --verbose "$IMAGE_NAME" | proot --link2symlink tar -xf - \
@@ -495,7 +496,6 @@ function print_banner() {
     printf "${yellow}技术支持: ChatGPT, Claude, Gemini, DeepSeek${reset}\n"
     printf "使用则代表同意协议:\n"
     printf "本脚本作者不承担因脚本引发的任何法律问题,一切均由使用者自行承担\n\n"
-    log "WARN" "2026/5/3 开始${red}kex无法使用${reset}(视乎是XFCE的问题<DeepSeek,ChatGPT都是怎么说的>" 
 }
 
 function main() {
